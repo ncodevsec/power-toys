@@ -1,0 +1,37 @@
+{
+	"manifest_version": 3,
+	"name": "Power Toys",
+	"version": "0.1.0",
+	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
+	"permissions": ["activeTab", "scripting", "storage", "contextMenus"],
+	"host_permissions": ["<all_urls>"],
+	"background": {
+		"service_worker": "src/scripts/background.js"
+	},
+	"icons": {
+		"16": "assets/images/power-toys-16.png",
+		"48": "assets/images/power-toys-48.png",
+		"128": "assets/images/power-toys-128.png"
+	},
+	"action": {
+		"default_popup": "src/pages/popup.html",
+		"default_title": "Power Toys - Simplify everyday security tasks",
+		"default_icon": {
+			"16": "assets/images/power-toys-16.png",
+			"48": "assets/images/power-toys-48.png",
+			"128": "assets/images/power-toys-128.png"
+		}
+	},
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"src/pages/popup.html",
+				"src/pages/context-popup.html",
+				"config/defaults.json"
+			],
+			"matches": ["<all_urls>"]
+		}
+	],
+	"author": "ncodevsec",
+	"homepage_url": "https://github.com/ncodevsec"
+}

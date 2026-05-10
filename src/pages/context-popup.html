@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encode/Decode</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../styles/style.css">
+    <style>
+        body {
+            width: 480px;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        body.full-screen {
+            width: 100%;
+        }
+
+        .context-popup-container {
+            padding: 12px;
+            background-color: var(--bg-card);
+            min-height: 100vh;
+        }
+
+        .context-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .context-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .context-header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .context-header-btn {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .context-header-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .method-badge {
+            font-size: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .context-section {
+            margin-bottom: 10px;
+        }
+
+        .context-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .context-textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            resize: none;
+        }
+
+        .context-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .context-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .context-btn {
+            flex: 1;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .context-btn-copy {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+        }
+
+        .context-btn-copy:hover {
+            filter: brightness(1.1);
+        }
+
+        .context-btn-repeat {
+            background: linear-gradient(135deg, #ea580c, #f97316);
+            color: white;
+        }
+
+        .context-btn-repeat:hover {
+            filter: brightness(1.1);
+        }
+
+        .context-counter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="context-popup-container">
+        <div class="context-header">
+            <span class="context-title">Encode/Decode</span>
+            <div class="context-header-buttons">
+                <button id="openFullScreenBtn" class="context-header-btn" title="Open in Full Screen">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                        </path>
+                    </svg>
+                </button>
+                <span id="methodDisplay" class="method-badge"></span>
+            </div>
+        </div>
+
+        <div class="context-section">
+            <div class="context-label">Input</div>
+            <textarea id="contextInput" class="context-textarea" rows="6" readonly></textarea>
+        </div>
+
+        <div class="context-section">
+            <div class="context-label">Output</div>
+            <textarea id="contextOutput" class="context-textarea" rows="6" readonly></textarea>
+        </div>
+
+        <div class="context-buttons">
+            <button id="contextCopyBtn" class="context-btn context-btn-copy">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+                Copy
+            </button>
+            <button id="contextRepeatBtn" class="context-btn context-btn-repeat">
+                <span id="contextRepeatCounter" class="context-counter">0</span>
+                <span>Repeat</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="context-popup.js"></script>
+</body>
+
+</html>
