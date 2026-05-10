@@ -9,4 +9,3 @@ build/
 .vscode
 .idea
 *.log
-test.html

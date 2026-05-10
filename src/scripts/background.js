@@ -1,12 +1,15 @@
 // Background script for context menu and message handling
+"use strict";
+
 let contextMenuData = {};
 
-// Link collection function — injected into page via executeScript
+// ─── Link collection — injected into page via executeScript ───────────────────
 function collectAllLinksInPage() {
 	const uniqueLinks = new Map();
 	const IMG_RE = /\.(jpeg|jpg|gif|png|svg|webp|ico)$/i;
 	const EXT_RE = /\.[a-zA-Z0-9]+$/;
-	const selectors = "a[href],link[href],script[src],img[src],iframe[src],source[src],video[src],audio[src],[data-url]";
+	const selectors =
+		"a[href],link[href],script[src],img[src],iframe[src],source[src],video[src],audio[src],[data-url]";
 
 	for (const tag of document.querySelectorAll(selectors)) {
 		const url = tag.href || tag.src || tag.getAttribute("data-url");
@@ -22,55 +25,196 @@ function collectAllLinksInPage() {
 
 		try {
 			const { hostname, pathname, search, hash } = new URL(url);
-			uniqueLinks.set(url, { fullUrl: url, category, domain: hostname, path: pathname + search + hash || "/" });
+			uniqueLinks.set(url, {
+				fullUrl: url,
+				category,
+				domain: hostname,
+				path: pathname + search + hash || "/",
+			});
 		} catch {}
 	}
 	return [...uniqueLinks.values()];
 }
 
-// Context menu setup
-const ENCODING_METHODS = [
-	{ id: "encode-base64",   title: "Base64 Encode",        method: "base64",   op: "encode" },
-	{ id: "decode-base64",   title: "Base64 Decode",        method: "base64",   op: "decode" },
-	{ id: "encode-url",      title: "URL Encode",           method: "url",      op: "encode" },
-	{ id: "decode-url",      title: "URL Decode",           method: "url",      op: "decode" },
-	{ id: "encode-html",     title: "HTML Entity Encode",   method: "html",     op: "encode" },
-	{ id: "decode-html",     title: "HTML Entity Decode",   method: "html",     op: "decode" },
-	{ id: "encode-hex",      title: "Hex Encode",           method: "hex",      op: "encode" },
-	{ id: "decode-hex",      title: "Hex Decode",           method: "hex",      op: "decode" },
-	{ id: "encode-unicode",  title: "Unicode Encode",       method: "unicode",  op: "encode" },
-	{ id: "decode-unicode",  title: "Unicode Decode",       method: "unicode",  op: "decode" },
-];
+// ─── Minimal secrets collection — injected into page via executeScript ────────
+function collectSecretsMinimal() {
+	const secrets = {
+		apiKeys: [],
+		credentials: [],
+		endpoints: [],
+		paths: [],
+		comments: [],
+		hiddenLinks: [],
+	};
 
-// Build a fast lookup map from the array — no duplication
-const METHOD_MAP = Object.fromEntries(ENCODING_METHODS.map((m) => [m.id, { method: m.method, op: m.op }]));
+	const secretPatterns = {
+		apiKeys: [
+			/(?:api[_-]?key|apikey|api_secret|apiSecret|access[_-]?key|accessKey|secret[_-]?key|secretKey)\s*[:=]\s*['"`]([a-zA-Z0-9\-_.]{8,})[`'"]/gi,
+			/(?:authorization|bearer|x-api-key|x-access-token)\s*[:=]\s*['"`]([a-zA-Z0-9\-_.]{8,})[`'"]/gi,
+			/(?:token|auth_?token|access_?token|refresh_?token)\s*[:=]\s*['"`]([a-zA-Z0-9\-_.]{8,})[`'"]/gi,
+		],
+		credentials: [
+			/(?:username|user|login)\s*[:=]\s*['"`]([^'"`\s]+)[`'"]/gi,
+			/(?:password|passwd|pwd|pass)\s*[:=]\s*['"`]([^'"`\s]+)[`'"]/gi,
+			/(?:email)\s*[:=]\s*['"`]([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})[`'"]/gi,
+		],
+		endpoints: [
+			/(?:endpoint|url|base_?url|api_?url|server)\s*[:=]\s*['"`](https?:\/\/[^\s'"`]+)[`'"]/gi,
+			/(?:host|hostname|domain)\s*[:=]\s*['"`]([a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})?)[`'"]/gi,
+		],
+		paths: [
+			/\/[a-zA-Z0-9_\-.\/]*(?:admin|api|internal|private|secret|debug|backup|upload|download|webhook|callback)[a-zA-Z0-9_\-.\/]*/gi,
+			/\/[a-zA-Z0-9_\-.\/]*(?:\.git|\.env|\.config|backup|\.sql|\.db|\.jar)[a-zA-Z0-9_\-.\/]*/gi,
+		],
+	};
 
-function createContextMenus() {
-	chrome.contextMenus.removeAll();
+	// Scan HTML comments
+	const walker = document.createTreeWalker(
+		document.documentElement,
+		NodeFilter.SHOW_COMMENT,
+		null,
+	);
+	let comment;
+	while ((comment = walker.nextNode())) {
+		const text = comment.textContent || comment.nodeValue || "";
+		if (!text || text.length === 0) continue;
 
-	chrome.contextMenus.create({
-		id: "power-toys-main",
-		title: "Power Toys",
-		contexts: ["page", "selection", "link", "image"],
-	});
+		const urls = text.match(/https?:\/\/[^\s<>"'`\)]+/g) || [];
+		urls.forEach((url) => {
+			if (!secrets.hiddenLinks.find((l) => l.value === url)) {
+				secrets.hiddenLinks.push({
+					type: "Hidden URL",
+					value: url,
+					source: "HTML Comment",
+				});
+			}
+		});
 
-	chrome.contextMenus.create({
-		id: "encode-decode-parent",
-		title: "Encode/Decode",
-		parentId: "power-toys-main",
-		contexts: ["selection"],
-	});
+		const paths = text.match(/\/[^\s<>"'`\)]*[\w\-]/g) || [];
+		paths.forEach((path) => {
+			if (
+				path.length > 2 &&
+				!secrets.hiddenLinks.find((l) => l.value === path)
+			) {
+				secrets.hiddenLinks.push({
+					type: "Hidden Path",
+					value: path,
+					source: "HTML Comment",
+				});
+			}
+		});
 
-	for (const item of ENCODING_METHODS) {
-		chrome.contextMenus.create({
-			id: item.id,
-			title: item.title,
-			parentId: "encode-decode-parent",
-			contexts: ["selection"],
+		secrets.comments.push({
+			type: "HTML Comment",
+			content: `<!-- ${text} -->`,
+			source: "Page Source",
+			sourceUrl: window.location.href,
 		});
 	}
+
+	// Scan page source for patterns
+	const allHtml = document.documentElement.outerHTML;
+
+	Object.entries(secretPatterns).forEach(([category, patterns]) => {
+		patterns.forEach((pattern) => {
+			let match;
+			while ((match = pattern.exec(allHtml)) !== null) {
+				const value = match[1] || match[0];
+				if (category === "apiKeys") {
+					if (!secrets.apiKeys.find((x) => x.value === value))
+						secrets.apiKeys.push({ type: "API Key", value });
+				} else if (category === "credentials") {
+					if (!secrets.credentials.find((x) => x.value === value))
+						secrets.credentials.push({ type: "Credential", value });
+				} else if (category === "endpoints") {
+					if (!secrets.endpoints.find((x) => x.value === value))
+						secrets.endpoints.push({ type: "Endpoint", value });
+				} else if (category === "paths") {
+					if (!secrets.paths.find((x) => x.value === value))
+						secrets.paths.push({ type: "Path", value });
+				}
+			}
+		});
+	});
+
+	return secrets;
 }
 
+// ─── Context menu definitions ─────────────────────────────────────────────────
+const ENCODING_METHODS = [
+	{
+		id: "encode-base64",
+		title: "Base64 Encode",
+		method: "base64",
+		op: "encode",
+	},
+	{
+		id: "decode-base64",
+		title: "Base64 Decode",
+		method: "base64",
+		op: "decode",
+	},
+	{ id: "encode-url", title: "URL Encode", method: "url", op: "encode" },
+	{ id: "decode-url", title: "URL Decode", method: "url", op: "decode" },
+	{
+		id: "encode-html",
+		title: "HTML Entity Encode",
+		method: "html",
+		op: "encode",
+	},
+	{
+		id: "decode-html",
+		title: "HTML Entity Decode",
+		method: "html",
+		op: "decode",
+	},
+	{ id: "encode-hex", title: "Hex Encode", method: "hex", op: "encode" },
+	{ id: "decode-hex", title: "Hex Decode", method: "hex", op: "decode" },
+	{
+		id: "encode-unicode",
+		title: "Unicode Encode",
+		method: "unicode",
+		op: "encode",
+	},
+	{
+		id: "decode-unicode",
+		title: "Unicode Decode",
+		method: "unicode",
+		op: "decode",
+	},
+];
+
+const METHOD_MAP = Object.fromEntries(
+	ENCODING_METHODS.map((m) => [m.id, { method: m.method, op: m.op }]),
+);
+
+function createContextMenus() {
+	chrome.contextMenus.removeAll(() => {
+		chrome.contextMenus.create({
+			id: "power-toys-main",
+			title: "Power Toys",
+			contexts: ["page", "selection", "link", "image"],
+		});
+
+		chrome.contextMenus.create({
+			id: "encode-decode-parent",
+			title: "Encode/Decode",
+			parentId: "power-toys-main",
+			contexts: ["selection"],
+		});
+
+		for (const item of ENCODING_METHODS) {
+			chrome.contextMenus.create({
+				id: item.id,
+				title: item.title,
+				parentId: "encode-decode-parent",
+				contexts: ["selection"],
+			});
+		}
+	});
+}
+
+// ─── Install handler ──────────────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(() => {
 	chrome.storage.sync.get(["sensitivePatterns"], (result) => {
 		if (!result.sensitivePatterns) {
@@ -90,36 +234,104 @@ chrome.runtime.onInstalled.addListener(() => {
 	createContextMenus();
 });
 
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+// ─── Context menu click handler ───────────────────────────────────────────────
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 	const { menuItemId, selectionText } = info;
 
 	if (menuItemId === "power-toys-main") {
-		chrome.scripting.executeScript(
-			{ target: { tabId: tab.id }, function: collectAllLinksInPage },
-			(results) => {
-				const links = results?.[0]?.result ?? [];
-				chrome.storage.local.set({ savedLinks: links }, () => {
-					chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/popup.html?fullTab=true") });
-				});
-			}
-		);
+		// Validate tab URL before parsing
+		let domain = "";
+		try {
+			domain = new URL(tab.url).hostname;
+		} catch {
+			return;
+		}
+
+		// Run both collections in parallel, then open the tab
+		const [linksResult, secretsResult] = await Promise.allSettled([
+			chrome.scripting.executeScript({
+				target: { tabId: tab.id },
+				function: collectAllLinksInPage,
+			}),
+			chrome.scripting.executeScript({
+				target: { tabId: tab.id },
+				function: collectSecretsMinimal,
+			}),
+		]);
+
+		const links =
+			linksResult.status === "fulfilled"
+				? (linksResult.value?.[0]?.result ?? [])
+				: [];
+		const secrets =
+			secretsResult.status === "fulfilled"
+				? (secretsResult.value?.[0]?.result ?? {
+						apiKeys: [],
+						credentials: [],
+						endpoints: [],
+						paths: [],
+						comments: [],
+						hiddenLinks: [],
+					})
+				: {
+						apiKeys: [],
+						credentials: [],
+						endpoints: [],
+						paths: [],
+						comments: [],
+						hiddenLinks: [],
+					};
+
+		await chrome.storage.local.set({
+			savedLinks: links,
+			savedSecrets: secrets,
+		});
+
+		chrome.tabs.create({
+			url: chrome.runtime.getURL(
+				`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
+			),
+		});
 		return;
 	}
 
 	const methodData = METHOD_MAP[menuItemId];
-	if (methodData) {
-		contextMenuData = { selectedText: selectionText, method: methodData.method, operation: methodData.op };
-		chrome.windows.create({
-			url: chrome.runtime.getURL("src/pages/context-popup.html"),
-			type: "popup",
-			width: 500,
-			height: 500,
+	if (methodData && selectionText) {
+		contextMenuData = {
+			selectedText: selectionText,
+			method: methodData.method,
+			operation: methodData.op,
+		};
+		// Create window with bottom-right positioning
+		chrome.system.display.getInfo((displays) => {
+			const windowOptions = {
+				url: chrome.runtime.getURL("src/pages/context-popup.html"),
+				type: "popup",
+				width: 500,
+				height: 500,
+			};
+			// Position at bottom-right with padding
+			if (displays.length > 0) {
+				const { left, top, width, height } = displays[0].bounds;
+				windowOptions.left = Math.max(0, left + width - 520);
+				windowOptions.top = Math.max(0, top + height - 520);
+			}
+			chrome.windows.create(windowOptions);
 		});
 	}
 });
 
-// Provide context data to context popup on request
+// ─── Message handler — validate sender origin ─────────────────────────────────
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.action === "getContextData") sendResponse(contextMenuData);
+	// Only respond to messages from our own extension pages
+	if (
+		sender.origin &&
+		sender.origin !== `chrome-extension://${chrome.runtime.id}`
+	) {
+		return false;
+	}
+	if (request?.action === "getContextData") {
+		sendResponse(contextMenuData);
+	}
+	return false;
 });

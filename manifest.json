@@ -1,9 +1,15 @@
 {
 	"manifest_version": 3,
 	"name": "Power Toys",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
-	"permissions": ["activeTab", "scripting", "storage", "contextMenus"],
+	"permissions": [
+		"activeTab",
+		"scripting",
+		"storage",
+		"contextMenus",
+		"system.display"
+	],
 	"host_permissions": ["<all_urls>"],
 	"background": {
 		"service_worker": "src/scripts/background.js"
@@ -25,13 +31,15 @@
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"src/pages/popup.html",
 				"src/pages/context-popup.html",
 				"config/defaults.json"
 			],
 			"matches": ["<all_urls>"]
 		}
 	],
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'none';"
+	},
 	"author": "ncodevsec",
 	"homepage_url": "https://github.com/ncodevsec"
 }

@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' https://cdnjs.cloudflare.com; img-src 'self' https://www.google.com data:; script-src 'self'; connect-src 'none';">
     <title>Power Toys</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../styles/style.css">
@@ -19,15 +21,7 @@
                 <option value="dark">Night</option>
             </select>
 
-            <button id="copyBtn" class="cyber-btn btn-green" title="Copy All Links">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-            </button>
-
-            <button id="openTabBtn" class="cyber-btn btn-blue px-3">
+            <button id="openTabBtn" class="cyber-btn btn-blue px-3" title="Open in full tab">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -42,33 +36,38 @@
     <div id="topLevelTabBar"
         class="flex text-sm font-bold mb-6 overflow-x-auto whitespace-nowrap border-b-2 border-gray-200 dark:border-gray-700">
         <div data-toplevel="links" class="top-level-tab tab-active">Links</div>
+        <div data-toplevel="params" class="top-level-tab">Params</div>
         <div data-toplevel="secrets" class="top-level-tab">Secrets</div>
         <div data-toplevel="cipher" class="top-level-tab">Cipher</div>
         <div data-toplevel="settings" class="top-level-tab">Settings</div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- LINKS TAB SECTION -->
-    <!-- ============================================ -->
+    <!-- LINKS TAB -->
     <div id="links-section" class="section-content active">
-        <!-- Links Sub-Tab Bar -->
-        <div id="linksSubTabBar"
-            class="flex text-xs font-bold mb-6 overflow-x-auto whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
-            <div data-subtab="links-all" class="sub-tab-item sub-tab-active">All</div>
-            <div data-subtab="links-paths" class="sub-tab-item">Paths</div>
-            <div data-subtab="links-javascript" class="sub-tab-item">JavaScript</div>
-            <div data-subtab="links-json" class="sub-tab-item">JSON</div>
-            <div data-subtab="links-images" class="sub-tab-item">Images</div>
-            <div data-subtab="links-others" class="sub-tab-item">Others</div>
-            <div data-subtab="links-params" class="sub-tab-item">Params</div>
-            <div class="flex-1"></div>
-            <button id="sensitiveLinkFilterBtn" class="sensitive-filter-btn ml-auto "
-                title="Show only sensitive links/params">
-                Sensitive
-            </button>
+        <div id="linksSubTabBar" class="sub-tab-bar">
+            <div>
+                <div data-subtab="links-all" class="sub-tab-item sub-tab-active">All</div>
+                <div data-subtab="links-paths" class="sub-tab-item">Paths</div>
+                <div data-subtab="links-javascript" class="sub-tab-item">JavaScript</div>
+                <div data-subtab="links-json" class="sub-tab-item">JSON</div>
+                <div data-subtab="links-images" class="sub-tab-item">Images</div>
+                <div data-subtab="links-others" class="sub-tab-item">Others</div>
+            </div>
+            <div>
+                <button id="sensitiveLinkFilterBtn" class="tab-bar-btn hover:border-red-700 hover:text-red-500"
+                    title="Show only sensitive links/params">Sensitive</button>
+                <button id="copyLinksBtn"
+                    class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xs px-3 py-1"
+                    title="Copy Links">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-inline">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>Copy
+                </button>
+            </div>
         </div>
-
-        <!-- Links Content -->
         <div id="links-content" class="mb-4">
             <input type="text" id="searchInput" placeholder="Search links..." class="cyber-input">
             <p id="searchResults" class="text-xs text-green-500 mt-2 hidden font-bold"></p>
@@ -78,32 +77,31 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
         </div>
-
-        <!-- Params View -->
-        <div id="params-view" class="space-y-4 hidden">
-            <div class="flex justify-center py-10">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-        </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SECRETS TAB SECTION -->
-    <!-- ============================================ -->
+    <!-- SECRETS TAB -->
     <div id="secrets-section" class="section-content hidden">
-        <!-- Secrets Sub-Tab Bar -->
-        <div id="secretsSubTabBar"
-            class="flex text-xs font-bold mb-6 overflow-x-auto whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
-            <div data-subtab="secrets-all" class="sub-tab-item sub-tab-active">All</div>
-            <div data-subtab="secrets-apikeys" class="sub-tab-item">API Keys</div>
-            <div data-subtab="secrets-credentials" class="sub-tab-item">Credentials</div>
-            <div data-subtab="secrets-endpoints" class="sub-tab-item">Endpoints</div>
-            <div data-subtab="secrets-paths" class="sub-tab-item">Paths</div>
-            <div data-subtab="secrets-hiddenlinks" class="sub-tab-item">Hidden Links</div>
-            <div data-subtab="secrets-comments" class="sub-tab-item">Comments</div>
+        <div id="secretsSubTabBar" class="sub-tab-bar">
+            <div>
+                <div data-subtab="secrets-all" class="sub-tab-item sub-tab-active">All</div>
+                <div data-subtab="secrets-apikeys" class="sub-tab-item">API Keys</div>
+                <div data-subtab="secrets-credentials" class="sub-tab-item">Credentials</div>
+                <div data-subtab="secrets-urls" class="sub-tab-item">URLs &amp; Paths</div>
+                <div data-subtab="secrets-comments" class="sub-tab-item">Comments</div>
+            </div>
+            <div>
+                <button id="copySecretsBtn"
+                    class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xs px-3 py-1"
+                    title="Copy Secrets">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon-inline">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>Copy
+                </button>
+            </div>
         </div>
-
-        <!-- Secrets Content -->
         <div id="secrets-content" class="mb-4">
             <input type="text" id="secretsSearchInput" placeholder="Search secrets..." class="cyber-input">
             <p id="secretsSearchResults" class="text-xs text-green-500 mt-2 hidden font-bold"></p>
@@ -115,27 +113,41 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
+    <!-- PARAMS TAB -->
+    <div id="params-section" class="section-content hidden">
+        <div id="paramsSubTabBar" class="sub-tab-bar">
+            <button id="copyParamsBtn" class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xl px-3 py-1"
+                title="Copy Params">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon-inline">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>Copy
+            </button>
+        </div>
+        <div id="params-content" class="mb-4">
+            <input type="text" id="paramsSearchInput" placeholder="Search params..." class="cyber-input">
+            <p id="paramsSearchResults" class="text-xs text-green-500 mt-2 hidden font-bold"></p>
+        </div>
+        <div id="params-view" class="space-y-4">
+            <div class="flex justify-center py-10">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        </div>
+    </div>
 
-    <!-- CIPHER TAB SECTION -->
-    <!-- ============================================ -->
+    <!-- CIPHER TAB -->
     <div id="cipher-section" class="section-content hidden">
-        <!-- Cipher Sub-Tab Bar -->
-        <div id="cipherSubTabBar"
-            class="flex text-xs font-bold mb-6 overflow-x-auto whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
+        <div id="cipherSubTabBar" class="sub-tab-bar">
             <div data-subtab="cipher-encode" class="sub-tab-item sub-tab-active">Encode/Decode</div>
         </div>
-
-        <!-- Cipher Content -->
         <div class="space-y-4">
-            <!-- Input Section -->
             <div>
                 <label class="block text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">Input Text</label>
                 <textarea id="encodeInput" placeholder="Enter text to encode/decode..."
                     class="cyber-input resize-none h-24"></textarea>
             </div>
-
-            <!-- Encoding Method Selection -->
             <div>
                 <label class="block text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">Encoding Method</label>
                 <select id="encodeMethod" class="cyber-input">
@@ -147,8 +159,6 @@
                     <option value="unicode">Unicode Escaping</option>
                 </select>
             </div>
-
-            <!-- Action Buttons -->
             <div class="flex gap-2 items-center">
                 <button id="encodeBtn" class="cyber-btn btn-blue flex-1">Encode</button>
                 <button id="decodeBtn" class="cyber-btn btn-blue flex-1">Decode</button>
@@ -157,135 +167,92 @@
                     <span class="ml-1">Repeat</span>
                 </button>
             </div>
-
-            <!-- Output Section -->
             <div>
                 <label class="block text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">Output</label>
                 <textarea id="encodeOutput" placeholder="Result will appear here..."
                     class="cyber-input resize-none h-24" readonly></textarea>
             </div>
-
-            <!-- Copy Result Button -->
             <button id="copyResultBtn" class="cyber-btn btn-green w-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="display: inline-block; margin-right: 0.5rem;">
+                    class="icon-inline-lg">
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-                Copy Result
+                </svg>Copy Result
             </button>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SETTINGS TAB SECTION -->
-    <!-- ============================================ -->
+    <!-- SETTINGS TAB -->
     <div id="settings-section" class="section-content hidden">
-        <div class="settings-tabs">
-            <div class="settings-tab active" data-settings-tab="parameter-keywords">
-                Parameter Keywords
-            </div>
-            <div class="settings-tab" data-settings-tab="url-patterns">
-                URL Patterns
-            </div>
-            <div class="settings-tab" data-settings-tab="general">
-                General
+        <div id="settingsTabBar" class="sub-tab-bar">
+            <div>
+                <div class="settings-tab active" data-settings-tab="parameter-keywords">Parameter Keywords</div>
+                <div class="settings-tab" data-settings-tab="url-patterns">URL Patterns</div>
+                <div class="settings-tab" data-settings-tab="general">General</div>
             </div>
         </div>
 
         <!-- Parameter Keywords Tab -->
         <div id="parameter-keywords" class="settings-tab-content active">
             <div class="section-card">
-                <div class="section-title">
-                    Parameter Keywords
+                <div class="section-title">Parameter Keywords</div>
+                <div class="section-description">Enter comma-separated keywords that indicate sensitive parameters.
                 </div>
-                <div class="section-description">
-                    Enter comma-separated keywords that indicate sensitive parameters.
-                </div>
-                <div class="info-box-settings">
-                    Example: <code>api_key, password, token</code>
-                </div>
+                <div class="info-box-settings">Example: <code>api_key, password, token</code></div>
                 <div class="pattern-input-group">
                     <label class="pattern-label">Sensitive Parameter Keywords</label>
                     <textarea rows="6" id="sensitiveParams" class="pattern-textarea"
                         placeholder="Enter keywords separated by commas..."></textarea>
-                    <div class="pattern-hint">
-                        Default: api_key, apikey, token, auth_token, password, secret, etc.
-                    </div>
+                    <div class="pattern-hint">Default: api_key, apikey, token, auth_token, password, secret, etc.</div>
                 </div>
             </div>
-
             <div class="settings-button-group">
-                <button class="settings-btn btn-primary-settings settings-save-btn">
-                    Save Settings
-                </button>
-                <button class="settings-btn btn-secondary-settings settings-reset-btn">
-                    ↻ Reset to Defaults
-                </button>
+                <button class="settings-btn btn-primary-settings settings-save-btn">Save Settings</button>
+                <button class="settings-btn btn-secondary-settings settings-reset-btn">↻ Reset to Defaults</button>
             </div>
-
-            <div id="statusMessage" class="status-message-settings"></div>
+            <div id="statusMessageParams" class="status-message-settings"></div>
         </div>
 
         <!-- URL Patterns Tab -->
         <div id="url-patterns" class="settings-tab-content">
             <div class="section-card">
-                <div class="section-title">
-                    URL Patterns
-                </div>
-                <div class="section-description">
-                    Enter regex patterns to match sensitive URLs. Each pattern on a new line.
-                </div>
-                <div class="info-box-settings">
-                    Use regex patterns. Example: <code>/admin/i</code>, <code>\/\.git/i</code>
+                <div class="section-title">URL Patterns</div>
+                <div class="section-description">Enter regex patterns to match sensitive URLs. Each pattern on a new
+                    line.</div>
+                <div class="info-box-settings">Use regex patterns. Example: <code>/admin/i</code>,
+                    <code>\/\.git/i</code>
                 </div>
                 <div class="pattern-input-group">
                     <label class="pattern-label">URL Patterns (Regex)</label>
                     <textarea rows="6" id="urlPatterns" class="pattern-textarea"
                         placeholder="Enter regex patterns, one per line..."></textarea>
-                    <div class="pattern-hint">
-                        Default: /admin/i, /login/i, /api/i, /secret/i, etc.
-                    </div>
+                    <div class="pattern-hint">Default: /admin/i, /login/i, /api/i, /secret/i, etc.</div>
                 </div>
             </div>
-
             <div class="settings-button-group">
-                <button class="settings-btn btn-primary-settings settings-save-btn">
-                    Save Settings
-                </button>
-                <button class="settings-btn btn-secondary-settings settings-reset-btn">
-                    ↻ Reset to Defaults
-                </button>
+                <button class="settings-btn btn-primary-settings settings-save-btn">Save Settings</button>
+                <button class="settings-btn btn-secondary-settings settings-reset-btn">↻ Reset to Defaults</button>
             </div>
-
-            <div id="statusMessage" class="status-message-settings"></div>
+            <div id="statusMessageUrls" class="status-message-settings"></div>
         </div>
 
         <!-- General Tab -->
         <div id="general" class="settings-tab-content">
             <div class="section-card">
-                <div class="section-title">
-                    About
+                <div class="section-title">About</div>
+                <div class="section-description">Power Toys Extension — Essential toolkit for pentesters and bug hunters
                 </div>
-                <div class="section-description">
-                    Power Toys Extension - Essential toolkit for pentesters and bug hunters
-                </div>
-
-                <div style="margin-top: 16px; font-size: 0.875rem;">
-                    <p><strong>Version:</strong> 0.2.0</p>
+                <div class="about-section">
+                    <p><strong>Version:</strong> 0.3.0</p>
                     <p><strong>Author:</strong> ncodevsec</p>
                     <p><strong>GitHub:</strong> <a href="https://github.com/ncodevsec/power-toys" target="_blank"
+                            rel="noopener noreferrer"
                             class="text-blue-500 hover:underline">github.com/ncodevsec/power-toys</a></p>
                 </div>
-
-                <div class="settings-button-group" style="margin-top: 20px;">
-                    <button class="settings-btn btn-secondary-settings" id="popupExportBtn">
-                        ⬇ Export Settings
-                    </button>
-                    <button class="settings-btn btn-secondary-settings" id="popupImportBtn">
-                        ⬆ Import Settings
-                    </button>
+                <div class="settings-button-group button-group-spacing">
+                    <button class="settings-btn btn-secondary-settings" id="popupExportBtn">⬇ Export Settings</button>
+                    <button class="settings-btn btn-secondary-settings" id="popupImportBtn">⬆ Import Settings</button>
                 </div>
             </div>
         </div>
@@ -295,10 +262,11 @@
         <p class="font-bold text-base">A Bug Hunting Tool</p>
         <p class="opacity-50 hover:opacity-100">
             Developed by
-            <a class="font-bold hover:text-red-500" href="https://github.com/ncodevsec">nCodevSec</a>
+            <a class="font-bold hover:text-red-500" href="https://github.com/ncodevsec" target="_blank"
+                rel="noopener noreferrer">nCodevSec</a>
             <span class="px-2">|</span>
-            <a class="font-bold hover:text-blue-500" href="https://github.com/ncodevsec/link-collector-pro">GitHub
-                Repo</a>
+            <a class="font-bold hover:text-blue-500" href="https://github.com/ncodevsec/power-toys" target="_blank"
+                rel="noopener noreferrer">GitHub Repo</a>
         </p>
     </div>
 
