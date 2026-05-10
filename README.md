@@ -97,29 +97,33 @@ power-toys/
 ## Core Functionalities
 
 ### 1. **Link Extraction & Categorization**
+
 - Automatically collects all links from the current webpage
 - Categorizes links by type:
-  - **JavaScript files** (.js)
-  - **JSON endpoints** (.json)
-  - **Images** (.jpeg, .jpg, .gif, .png, .svg, .webp, .ico)
-  - **Paths** (URLs without extensions)
-  - **Others** (miscellaneous resources)
+    - **JavaScript files** (.js)
+    - **JSON endpoints** (.json)
+    - **Images** (.jpeg, .jpg, .gif, .png, .svg, .webp, .ico)
+    - **Paths** (URLs without extensions)
+    - **Others** (miscellaneous resources)
 - Extracts links from: `<a>`, `<link>`, `<script>`, `<img>`, `<iframe>`, `<source>`, `<video>`, `<audio>` tags, and `data-url` attributes
 - Removes duplicate links and filters by domain
 
 ### 2. **Sensitive Data Detection**
+
 - **Sensitive Parameters**: Detects common security-related keywords in URLs:
-  - Authentication: `api_key`, `token`, `auth_token`, `bearer`, `jwt`, `access_token`
-  - Credentials: `password`, `passwd`, `pwd`, `username`, `email`
-  - Identifiers: `user_id`, `session_id`, `uuid`, `admin`
-  - Endpoints: `redirect`, `callback`, `return`, `origin`
+    - Authentication: `api_key`, `token`, `auth_token`, `bearer`, `jwt`, `access_token`
+    - Credentials: `password`, `passwd`, `pwd`, `username`, `email`
+    - Identifiers: `user_id`, `session_id`, `uuid`, `admin`
+    - Endpoints: `redirect`, `callback`, `return`, `origin`
 - Supports **customizable regex patterns** for detecting sensitive URLs
 - Highlights links containing sensitive parameters in a dedicated section
 - Scans HTML comments for hidden URLs and sensitive paths
 - Filters paths containing admin, api, internal, private, secret, debug, backup endpoints
 
 ### 3. **Encoding/Decoding Tools**
+
 Supports 5 encoding formats with bidirectional conversion:
+
 - **Base64** - Encode/decode with proper handling of UTF-8 characters
 - **URL Encoding** - Escape/unescape URL-safe characters
 - **HTML Entities** - Convert special characters to HTML entities
@@ -127,6 +131,7 @@ Supports 5 encoding formats with bidirectional conversion:
 - **Unicode Escaping** - Convert to/from Unicode escape sequences (\\uXXXX format)
 
 ### 4. **Intelligent Search & Filtering**
+
 - Real-time search across extracted links
 - Filter by category (Links, Paths, JavaScript, JSON, Images, Others)
 - Filter by sensitivity level (all vs. sensitive-only)
@@ -134,7 +139,9 @@ Supports 5 encoding formats with bidirectional conversion:
 - Live highlighting of matching results
 
 ### 5. **Secret Collection & Analysis**
+
 Automated detection of hardcoded secrets and sensitive patterns:
+
 - **API Keys & Tokens** - Regex patterns for common API key variables
 - **Credentials** - Username/password patterns in HTML/JavaScript
 - **Endpoints** - Hardcoded base URLs and hostnames
@@ -143,6 +150,7 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - Uses comprehensive regex patterns from defaults.json (500+ sensitive keywords)
 
 ### 6. **Settings Management**
+
 - **Import Patterns** - Load custom regex patterns for sensitive detection
 - **Export Patterns** - Save current patterns for backup/sharing
 - **Pattern Customization** - Add custom regex patterns for your use cases
@@ -150,34 +158,36 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - **Local Storage** - Persists settings and patterns across sessions
 
 ### 7. **User Interface Features**
+
 - **Tab-Based Navigation**:
-  - Links Tab - Extract and analyze page links
-  - Params Tab - Detect sensitive parameters (coming soon)
-  - Secrets Tab - Analyze hardcoded secrets
-  - Cipher Tab - Encoding/decoding tools
-  - Settings Tab - Configuration and pattern management
+    - Links Tab - Extract and analyze page links
+    - Params Tab - Detect sensitive parameters (coming soon)
+    - Secrets Tab - Analyze hardcoded secrets
+    - Cipher Tab - Encoding/decoding tools
+    - Settings Tab - Configuration and pattern management
 - **Dark Mode Support** - Automatically respects system preferences
 - **Responsive Design** - Works seamlessly on different screen sizes
 - **Toast Notifications** - Non-intrusive feedback for user actions
 - **Copy-to-Clipboard** - Easy one-click copying of extracted data
 
 ### 8. **Context Menu Integration**
+
 - Right-click access to quick functions on any webpage
 - Direct access to Power Toys tools from context menus
 - Instant analysis without opening the main popup
 
 ## Technical Details
 
-| Aspect                | Details                                                       |
-| --------------------- | ------------------------------------------------------------- |
-| **Manifest Version**  | 3 (Latest Chrome Extension standard)                          |
-| **Permissions**       | activeTab, scripting, storage, contextMenus, system.display   |
-| **Host Permissions**  | All URLs (`<all_urls>`)                                       |
-| **Service Worker**    | `src/scripts/background.js` (background tasks & context menus) |
-| **Popup Interface**   | `src/pages/popup.html` + `src/pages/popup.js`                 |
-| **Styling**           | Tailwind CSS 2.2.19 + Custom CSS (style.css)                  |
-| **Storage**           | Chrome Storage API for persistent configuration                |
-| **Author**            | [@ncodevsec](https://github.com/ncodevsec)                    |
+| Aspect               | Details                                                        |
+| -------------------- | -------------------------------------------------------------- |
+| **Manifest Version** | 3 (Latest Chrome Extension standard)                           |
+| **Permissions**      | activeTab, scripting, storage, contextMenus, system.display    |
+| **Host Permissions** | All URLs (`<all_urls>`)                                        |
+| **Service Worker**   | `src/scripts/background.js` (background tasks & context menus) |
+| **Popup Interface**  | `src/pages/popup.html` + `src/pages/popup.js`                  |
+| **Styling**          | Tailwind CSS 2.2.19 + Custom CSS (style.css)                   |
+| **Storage**          | Chrome Storage API for persistent configuration                |
+| **Author**           | [@ncodevsec](https://github.com/ncodevsec)                     |
 
 ## Requirements
 
