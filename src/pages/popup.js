@@ -1166,37 +1166,76 @@ document
 		flashCopied(this, this.innerHTML);
 	});
 
-document.getElementById("copyParamsBtn").addEventListener("click", function () {
-	const allParams = {};
-	for (const link of allLinksGlobal) {
-		try {
-			const { hostname: domain, searchParams } = new URL(link.fullUrl);
-			const dp = (allParams[domain] ||= {});
-			searchParams.forEach((value, key) => {
-				(dp[key] ||= { values: new Set() }).values.add(value);
-			});
-		} catch {}
-	}
-	let paramsList = [];
-	for (const [domain, params] of Object.entries(allParams)) {
-		for (const [key, data] of Object.entries(params)) {
-			const sensitive = isSensitiveParam(key);
-			for (const value of data.values)
-				paramsList.push(
-					`${key}=${value}${sensitive ? " [SENSITIVE]" : ""}`,
+// Toggle params copy menu
+document
+	.getElementById("copyParamsBtn")
+	.addEventListener("click", function (e) {
+		const menu = document.getElementById("copyParamsMenu");
+		menu.style.display = menu.style.display === "none" ? "flex" : "none";
+		e.stopPropagation();
+	});
+
+// Copy params with selected option
+document.querySelectorAll(".copy-menu-item").forEach((btn) => {
+	btn.addEventListener("click", function () {
+		const copyType = this.getAttribute("data-copy-type");
+		const allParams = {};
+		for (const link of allLinksGlobal) {
+			try {
+				const { hostname: domain, searchParams } = new URL(
+					link.fullUrl,
 				);
+				const dp = (allParams[domain] ||= {});
+				searchParams.forEach((value, key) => {
+					(dp[key] ||= { values: new Set() }).values.add(value);
+				});
+			} catch {}
 		}
+
+		let paramsList = [];
+		for (const [domain, params] of Object.entries(allParams)) {
+			for (const [key, data] of Object.entries(params)) {
+				for (const value of data.values) {
+					if (copyType === "both") {
+						paramsList.push(`${key}=${value}`);
+					} else if (copyType === "names") {
+						paramsList.push(key);
+					} else if (copyType === "values") {
+						paramsList.push(value);
+					}
+				}
+			}
+		}
+
+		// Remove duplicates
+		paramsList = [...new Set(paramsList)];
+
+		if (currentSearchQuery) {
+			const st = currentSearchQuery.toLowerCase();
+			paramsList = paramsList.filter((p) => p.toLowerCase().includes(st));
+		}
+		if (!paramsList.length) {
+			showToast("No params to copy", "error");
+			return;
+		}
+		navigator.clipboard.writeText(paramsList.join("\n"));
+		flashCopied(
+			document.getElementById("copyParamsBtn"),
+			document.getElementById("copyParamsBtn").innerHTML,
+		);
+		document.getElementById("copyParamsMenu").style.display = "none";
+	});
+});
+
+// Close menu when clicking outside
+document.addEventListener("click", function (e) {
+	const menu = document.getElementById("copyParamsMenu");
+	if (
+		!e.target.closest("#copyParamsBtn") &&
+		!e.target.closest("#copyParamsMenu")
+	) {
+		menu.style.display = "none";
 	}
-	if (currentSearchQuery) {
-		const st = currentSearchQuery.toLowerCase();
-		paramsList = paramsList.filter((p) => p.toLowerCase().includes(st));
-	}
-	if (!paramsList.length) {
-		showToast("No params to copy", "error");
-		return;
-	}
-	navigator.clipboard.writeText(paramsList.join("\n"));
-	flashCopied(this, this.innerHTML);
 });
 
 document.getElementById("openTabBtn").addEventListener("click", async () => {
