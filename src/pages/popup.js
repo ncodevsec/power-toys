@@ -1,7 +1,17 @@
 // === State ===
 let allLinksGlobal = [];
+let allSecretsGlobal = {
+	apiKeys: [],
+	credentials: [],
+	endpoints: [],
+	paths: [],
+	comments: [],
+	hiddenLinks: [],
+};
 let currentCategory = "All";
+let currentSecretsCategory = "All";
 let currentSearchQuery = "";
+let currentSecretsSearchQuery = "";
 let showOnlySensitiveLinks = false;
 let cachedDomain = "";
 
@@ -92,7 +102,471 @@ function collectAllLinksInPage() {
 	return [...uniqueLinks.values()];
 }
 
-// === Sensitive Detection ===
+// === Secrets Collection (injected into page via executeScript) ===
+
+function collectSecretsFromPage() {
+	const secrets = {
+		apiKeys: [],
+		credentials: [],
+		endpoints: [],
+		paths: [],
+		comments: [],
+		hiddenLinks: [],
+	};
+
+	// DEBUG: Log function execution
+	console.log("[collectSecretsFromPage] ===== FUNCTION STARTED =====");
+	console.log("[collectSecretsFromPage] Page URL:", window.location.href);
+	console.log(
+		"[collectSecretsFromPage] Document ready state:",
+		document.readyState,
+	);
+	console.log("[collectSecretsFromPage] Document title:", document.title);
+
+	// DEBUG: Check if we can access source code
+	const pageSource = document.documentElement.outerHTML;
+	console.log(
+		"[collectSecretsFromPage] Page source code length:",
+		pageSource.length,
+	);
+	console.log(
+		"[collectSecretsFromPage] Page source first 500 chars:",
+		pageSource.substring(0, 500),
+	);
+	console.log(
+		"[collectSecretsFromPage] Page source last 500 chars:",
+		pageSource.substring(Math.max(0, pageSource.length - 500)),
+	);
+
+	const secretPatterns = {
+		apiKeys: [
+			/(?:api[_-]?key|apikey|api_secret|apiSecret|access[_-]?key|accessKey|secret[_-]?key|secretKey)\s*[:=]\s*['""`]([a-zA-Z0-9\-_.]+)['""`]/gi,
+			/(?:authorization|bearer|x-api-key|x-access-token)\s*[:=]\s*['""`]([a-zA-Z0-9\-_.]+)['""`]/gi,
+			/(?:token|auth_?token|access_?token|refresh_?token)\s*[:=]\s*['""`]([a-zA-Z0-9\-_.]+)['""`]/gi,
+		],
+		credentials: [
+			/(?:username|user|login)\s*[:=]\s*['""`]([^'""`\s]+)['""`]/gi,
+			/(?:password|passwd|pwd|pass)\s*[:=]\s*['""`]([^'""`\s]+)['""`]/gi,
+			/(?:email)\s*[:=]\s*['""`]([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})['""`]/gi,
+		],
+		endpoints: [
+			/(?:endpoint|url|base_?url|api_?url|server)\s*[:=]\s*['""`](https?:\/\/[^\s'""`]+)['""`]/gi,
+			/(?:host|hostname|domain)\s*[:=]\s*['""`]([a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})?)['""`]/gi,
+		],
+		paths: [
+			/\/[a-zA-Z0-9_\-./]*(?:admin|api|internal|private|secret|debug|backup|upload|download|webhook|callback)[a-zA-Z0-9_\-./]*/gi,
+			/\/[a-zA-Z0-9_\-./]*(?:\.git|\.env|\.config|backup|\.sql|\.db|\.jar)[a-zA-Z0-9_\-./]*/gi,
+		],
+	};
+
+	// Scan HTML comments for hidden links and sensitive info
+	const walker = document.createTreeWalker(
+		document.documentElement,
+		NodeFilter.SHOW_COMMENT,
+		null,
+		false,
+	);
+	let comment;
+	const commentTexts = [];
+
+	// DEBUG: Start comment scanning
+	console.log("[collectSecretsFromPage] ===== STARTING COMMENT SCAN =====");
+	console.log(
+		"[collectSecretsFromPage] TreeWalker created, SHOW_COMMENT = ",
+		NodeFilter.SHOW_COMMENT,
+	);
+
+	let commentIndex = 0;
+	while ((comment = walker.nextNode())) {
+		commentIndex++;
+		const text = comment.textContent || comment.nodeValue || "";
+		console.log(
+			`[collectSecretsFromPage] Comment #${commentIndex} found (length: ${text.length}):`,
+			text.substring(0, 100),
+		);
+
+		if (text && text.length > 0) {
+			commentTexts.push(text);
+			console.log(
+				`[collectSecretsFromPage]   → Storing comment, total comments so far: ${commentTexts.length}`,
+			);
+
+			// Simple href extraction - catch href=/path
+			const simpleHrefRegex = /href\s*=\s*['"]*([^\s'">\]]+)/gi;
+			let hrefMatch;
+			while ((hrefMatch = simpleHrefRegex.exec(text)) !== null) {
+				const val = hrefMatch[1]?.trim();
+				console.log(
+					`[collectSecretsFromPage]   → Href match found: ${val}`,
+				);
+				if (val && !secrets.hiddenLinks.find((l) => l.value === val)) {
+					secrets.hiddenLinks.push({
+						type: "Hidden Link",
+						value: val,
+						source: "HTML Comment",
+						context: text.substring(0, 100),
+					});
+					console.log(
+						`[collectSecretsFromPage]     ✓ Added to hiddenLinks: ${val}`,
+					);
+				}
+			}
+
+			// Extract paths starting with /
+			const paths = text.match(/\/[^\s<>"'`\)]*[\w\-]/g) || [];
+			paths.forEach((path) => {
+				if (
+					path.length > 2 &&
+					!secrets.hiddenLinks.find((l) => l.value === path)
+				) {
+					secrets.hiddenLinks.push({
+						type: "Hidden Path",
+						value: path,
+						source: "HTML Comment",
+						context: text.substring(0, 100),
+					});
+				}
+			});
+
+			// Extract full URLs
+			const urls = text.match(/https?:\/\/[^\s<>"'`\)]+/g) || [];
+			urls.forEach((url) => {
+				if (!secrets.hiddenLinks.find((l) => l.value === url)) {
+					secrets.hiddenLinks.push({
+						type: "Hidden URL",
+						value: url,
+						source: "HTML Comment",
+						context: text.substring(0, 100),
+					});
+				}
+			});
+
+			// Extract debug, admin, api, internal links
+			const suspiciousLinks = text.match(
+				/['"](\/[^\s'"]*(?:debug|admin|api|internal|private|secret|backup)[^\s'"]*)['"]/gi,
+			);
+			if (suspiciousLinks) {
+				suspiciousLinks.forEach((m) => {
+					const val = m.replace(/['"]/g, "");
+					if (!secrets.hiddenLinks.find((l) => l.value === val)) {
+						secrets.hiddenLinks.push({
+							type: "Hidden Link",
+							value: val,
+							source: "HTML Comment",
+							context: text.substring(0, 100),
+						});
+					}
+				});
+			}
+
+			// Store ALL comments (not just sensitive ones)
+			// This way the Comments sub-tab will show all comments from the page
+			// Include the <!-- and --> markers to show the full comment
+			const fullComment = `<!-- ${text} -->`;
+			secrets.comments.push({
+				type: "HTML Comment",
+				content: fullComment,
+				source: "Page Source",
+			});
+		}
+	}
+
+	// DEBUG: Log comment scanning results
+	console.log("[collectSecretsFromPage] ===== COMMENT SCAN COMPLETE =====");
+	console.log(
+		"[collectSecretsFromPage] Total comments found:",
+		commentTexts.length,
+	);
+	if (commentTexts.length === 0) {
+		console.log(
+			"[collectSecretsFromPage] ℹ️  No HTML comments found on this page.",
+		);
+		console.log(
+			"[collectSecretsFromPage] This is normal for most production websites as comments are often removed during minification/build processes.",
+		);
+	} else {
+		console.log("[collectSecretsFromPage] All comments:", commentTexts);
+	}
+	console.log(
+		"[collectSecretsFromPage] Hidden links found:",
+		secrets.hiddenLinks.length,
+	);
+	if (secrets.hiddenLinks.length > 0) {
+		console.log(
+			"[collectSecretsFromPage] Hidden links details:",
+			JSON.stringify(secrets.hiddenLinks, null, 2),
+		);
+	} else {
+		console.log(
+			"[collectSecretsFromPage] WARNING: No hidden links found in comments!",
+		);
+	}
+
+	// Scan all text content for suspicious patterns
+	const allText = document.body.innerText;
+	const allHtml = document.documentElement.outerHTML;
+
+	// DEBUG: Check what we're scanning
+	console.log("[collectSecretsFromPage] All HTML length:", allHtml.length);
+	console.log("[collectSecretsFromPage] All text length:", allText.length);
+
+	// IMPORTANT: Exclude content from injected extensions and vendor code
+	// Only scan the main document content, not vendor/injected scripts
+	const isVendorCode = (str) => {
+		const vendorPatterns = [
+			/grammarly/i,
+			/live-server/i,
+			/chrome-extension/i,
+			/injected/i,
+			/hb-blur/i,
+			/sessionStorage/i,
+			/Service Worker/i,
+		];
+		return vendorPatterns.some((p) => p.test(str));
+	};
+
+	// Extract API Keys - but filter out false positives
+	for (const pattern of secretPatterns.apiKeys) {
+		let match;
+		while ((match = pattern.exec(allHtml))) {
+			// Skip vendor code
+			if (isVendorCode(match[0])) {
+				console.log(
+					"[collectSecretsFromPage] Skipping vendor code:",
+					match[0].substring(0, 50),
+				);
+				continue;
+			}
+			secrets.apiKeys.push({
+				type: "API Key",
+				pattern: match[0].substring(0, 100),
+				value: match[1]?.substring(0, 100),
+				source: "HTML/JS",
+			});
+		}
+	}
+
+	// Extract Credentials - but filter out false positives
+	for (const pattern of secretPatterns.credentials) {
+		let match;
+		while ((match = pattern.exec(allHtml))) {
+			// Skip vendor code
+			if (isVendorCode(match[0])) {
+				console.log(
+					"[collectSecretsFromPage] Skipping vendor code:",
+					match[0].substring(0, 50),
+				);
+				continue;
+			}
+			secrets.credentials.push({
+				type: "Credential",
+				pattern: match[0].substring(0, 100),
+				value: match[1]?.substring(0, 100),
+				source: "HTML/JS",
+			});
+		}
+	}
+
+	// Extract Endpoints - but filter out false positives
+	for (const pattern of secretPatterns.endpoints) {
+		let match;
+		while ((match = pattern.exec(allHtml))) {
+			// Skip vendor code
+			if (isVendorCode(match[0])) {
+				console.log(
+					"[collectSecretsFromPage] Skipping vendor endpoint:",
+					match[0].substring(0, 50),
+				);
+				continue;
+			}
+			secrets.endpoints.push({
+				type: "Endpoint",
+				value: match[1]?.substring(0, 150),
+				source: "HTML/JS",
+			});
+		}
+	}
+
+	// Extract Hidden Paths - but filter out false positives
+	for (const pattern of secretPatterns.paths) {
+		let match;
+		while ((match = pattern.exec(allHtml))) {
+			const path = match[0];
+			// Skip vendor code
+			if (isVendorCode(path)) {
+				console.log(
+					"[collectSecretsFromPage] Skipping vendor path:",
+					path.substring(0, 50),
+				);
+				continue;
+			}
+			if (!secrets.paths.find((p) => p.value === path)) {
+				secrets.paths.push({
+					type: "Path",
+					value: path,
+					source: "HTML/JS",
+				});
+			}
+		}
+	}
+
+	// Scan script tags
+	for (const script of document.querySelectorAll("script")) {
+		if (!script.src && script.textContent) {
+			const code = script.textContent;
+
+			// Extract JavaScript comments (both // and /* */ style)
+			const jsComments = [];
+
+			// Extract single-line comments (//)
+			const singleLineComments = code.match(/\/\/.*$/gm) || [];
+			singleLineComments.forEach((comment) => {
+				const cleaned = comment.replace(/^\/\/\s*/, "").trim();
+				if (cleaned && cleaned.length > 0) {
+					jsComments.push(`// ${cleaned}`);
+				}
+			});
+
+			// Extract multi-line comments (/* */)
+			const multiLineComments = code.match(/\/\*[\s\S]*?\*\//g) || [];
+			multiLineComments.forEach((comment) => {
+				const cleaned = comment
+					.replace(/^\/\*\s*/, "")
+					.replace(/\s*\*\/$/, "")
+					.trim();
+				if (cleaned && cleaned.length > 0) {
+					jsComments.push(`/* ${cleaned} */`);
+				}
+			});
+
+			// Add all JS comments to secrets.comments
+			jsComments.forEach((jsComment) => {
+				secrets.comments.push({
+					type: "JavaScript Comment",
+					content: jsComment,
+					source: "Script",
+				});
+			});
+
+			// Look for API keys in inline scripts
+			const apiKeyMatches = code.match(
+				/(?:api[_-]?key|apikey|api_secret|token|auth_token)\s*[:=]\s*['""`]([a-zA-Z0-9\-_.]+)['""`]/gi,
+			);
+			if (apiKeyMatches) {
+				apiKeyMatches.forEach((match) => {
+					if (!secrets.apiKeys.find((s) => s.pattern === match)) {
+						secrets.apiKeys.push({
+							type: "API Key (Script)",
+							pattern: match.substring(0, 100),
+							source: "Script",
+						});
+					}
+				});
+			}
+
+			// Look for credentials
+			const credMatches = code.match(
+				/(?:password|passwd|pwd)\s*[:=]\s*['""`]([^'""`\s]+)['""`]/gi,
+			);
+			if (credMatches) {
+				credMatches.forEach((match) => {
+					secrets.credentials.push({
+						type: "Credential (Script)",
+						pattern: match.substring(0, 100),
+						source: "Script",
+					});
+				});
+			}
+
+			// Look for endpoints
+			const endpointMatches = code.match(
+				/(https?:\/\/[a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})?(?:\/[^\s'""`]*)?)/g,
+			);
+			if (endpointMatches) {
+				endpointMatches.forEach((match) => {
+					if (!secrets.endpoints.find((s) => s.value === match)) {
+						secrets.endpoints.push({
+							type: "Endpoint (Script)",
+							value: match.substring(0, 150),
+							source: "Script",
+						});
+					}
+				});
+			}
+		}
+	}
+
+	// Scan CSS files for suspicious content and comments
+	for (const style of document.querySelectorAll("style")) {
+		const css = style.textContent;
+
+		// Extract CSS comments (/* */ style only)
+		const cssComments = css.match(/\/\*[\s\S]*?\*\//g) || [];
+		cssComments.forEach((comment) => {
+			const cleaned = comment
+				.replace(/^\/\*\s*/, "")
+				.replace(/\s*\*\/$/, "")
+				.trim();
+			if (cleaned && cleaned.length > 0) {
+				secrets.comments.push({
+					type: "CSS Comment",
+					content: `/* ${cleaned} */`,
+					source: "Style",
+				});
+			}
+		});
+
+		// Look for suspicious URLs in CSS
+		const suspiciousMatches = css.match(
+			/(?:url\(|@import)['"(`]([^'"`)]+)['"`)]/gi,
+		);
+		if (suspiciousMatches) {
+			suspiciousMatches.forEach((match) => {
+				if (!secrets.endpoints.find((s) => s.value === match)) {
+					secrets.endpoints.push({
+						type: "Resource (CSS)",
+						value: match.substring(0, 150),
+						source: "CSS",
+					});
+				}
+			});
+		}
+	}
+
+	// Check for data attributes that might contain sensitive info
+	for (const el of document.querySelectorAll(
+		"[data-api], [data-key], [data-token], [data-secret], [data-password], [data-auth]",
+	)) {
+		for (const attr of el.attributes) {
+			if (
+				attr.name.startsWith("data-") &&
+				/(?:api|key|token|secret|password|auth)/.test(attr.name)
+			) {
+				const value = attr.value;
+				if (value.length > 0 && value.length < 500) {
+					secrets.apiKeys.push({
+						type: "Data Attribute",
+						pattern: `${attr.name}="${value.substring(0, 100)}"`,
+						source: "HTML Attributes",
+					});
+				}
+			}
+		}
+	}
+
+	// Remove duplicates
+	Object.keys(secrets).forEach((key) => {
+		secrets[key] = secrets[key].filter(
+			(item, index, arr) =>
+				index ===
+				arr.findIndex(
+					(t) => JSON.stringify(t) === JSON.stringify(item),
+				),
+		);
+	});
+
+	return secrets;
+}
 
 function isSensitiveLink(url) {
 	try {
@@ -147,6 +621,9 @@ document.getElementById("topLevelTabBar").addEventListener("click", (e) => {
 		.querySelectorAll(".section-content")
 		.forEach((el) => el.classList.add("hidden"));
 	document.getElementById(`${topLevel}-section`)?.classList.remove("hidden");
+	if (topLevel === "secrets") {
+		setTimeout(() => renderSecrets(), 50);
+	}
 });
 
 // Settings sub-tab switching via delegation
@@ -210,6 +687,27 @@ document.getElementById("linksSubTabBar").addEventListener("click", (e) => {
 	renderLinks();
 });
 
+// Secrets sub-tab switching
+document.addEventListener("click", (e) => {
+	if (!e.target.closest("#secretsSubTabBar")) return;
+	if (!e.target.dataset.subtab) return;
+	document
+		.querySelectorAll("#secretsSubTabBar .sub-tab-item")
+		.forEach((el) => el.classList.remove("sub-tab-active"));
+	e.target.classList.add("sub-tab-active");
+	const map = {
+		"secrets-all": "all",
+		"secrets-apikeys": "apiKeys",
+		"secrets-credentials": "credentials",
+		"secrets-endpoints": "endpoints",
+		"secrets-paths": "paths",
+		"secrets-hiddenlinks": "hiddenLinks",
+		"secrets-comments": "comments",
+	};
+	currentSecretsCategory = map[e.target.dataset.subtab] || "all";
+	renderSecrets();
+});
+
 // Search
 document.getElementById("searchInput").addEventListener("input", (e) => {
 	currentSearchQuery = e.target.value.toLowerCase();
@@ -219,6 +717,13 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
 		!document.getElementById("params-view").classList.contains("hidden")
 	)
 		renderParams();
+});
+
+// Secrets Search
+document.addEventListener("input", (e) => {
+	if (e.target.id !== "secretsSearchInput") return;
+	currentSecretsSearchQuery = e.target.value.toLowerCase();
+	renderSecrets();
 });
 
 // === Render Functions ===
@@ -400,6 +905,105 @@ function renderParams() {
 		frag.appendChild(section);
 	}
 	paramsDiv.appendChild(frag);
+}
+
+// === Render Secrets ===
+
+function renderSecrets() {
+	const secretsDiv = document.getElementById("secrets-view");
+	if (!secretsDiv) return;
+	secretsDiv.innerHTML = "";
+
+	if (
+		!allSecretsGlobal.apiKeys.length &&
+		!allSecretsGlobal.credentials.length &&
+		!allSecretsGlobal.endpoints.length &&
+		!allSecretsGlobal.paths.length &&
+		!allSecretsGlobal.comments.length &&
+		!allSecretsGlobal.hiddenLinks.length
+	) {
+		secretsDiv.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-500"><div class="text-4xl mb-3">🔍</div><p class="font-semibold">No secrets found</p><p class="text-xs mt-1">This page has no exposed sensitive information</p></div>`;
+		return;
+	}
+
+	let items = [];
+	if (currentSecretsCategory === "all") {
+		Object.values(allSecretsGlobal).forEach((arr) => items.push(...arr));
+	} else if (allSecretsGlobal[currentSecretsCategory]) {
+		items = allSecretsGlobal[currentSecretsCategory];
+	}
+
+	if (currentSecretsSearchQuery) {
+		items = items.filter((item) => {
+			const s = currentSecretsSearchQuery;
+			return (
+				item.pattern?.toLowerCase().includes(s) ||
+				item.value?.toLowerCase().includes(s) ||
+				item.content?.toLowerCase().includes(s) ||
+				item.type?.toLowerCase().includes(s)
+			);
+		});
+	}
+
+	if (!items.length) {
+		secretsDiv.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-500"><p class="font-semibold">No results</p></div>`;
+		document
+			.getElementById("secretsSearchResults")
+			?.classList.add("hidden");
+		return;
+	}
+
+	const grouped = {};
+	items.forEach((item) => {
+		(grouped[item.type] ||= []).push(item);
+	});
+
+	const frag = document.createDocumentFragment();
+	Object.entries(grouped).forEach(([type, typeItems]) => {
+		const div = document.createElement("div");
+		div.className = "cyber-card";
+		const itemsHtml = typeItems
+			.map((item) => {
+				const val = item.pattern || item.value || item.content || "";
+				// For comments, show full content; for others, truncate to 150 chars
+				const isComment =
+					type === "HTML Comment" ||
+					type === "JavaScript Comment" ||
+					type === "CSS Comment";
+				const displayVal = isComment ? val : val.substring(0, 150);
+				const isHiddenLink =
+					type === "Hidden Link" || type === "Hidden URL";
+
+				// Escape HTML entities for proper display
+				const escapeHtml = (text) => {
+					const div = document.createElement("div");
+					div.textContent = text;
+					return div.innerHTML;
+				};
+
+				const linkHtml = isHiddenLink
+					? `<a href="${val}" target="_blank" class="text-blue-400 hover:underline font-mono">${escapeHtml(displayVal)}</a>`
+					: escapeHtml(displayVal);
+
+				return `<li class="flex items-center text-sm gap-2">
+					<span class="bullet-point mr-1">•</span>
+					<code class="text-xs bg-gray-900 text-green-400 px-2 py-1 rounded font-mono flex-1 break-all">${linkHtml}${!isComment && val.length > 150 ? "..." : ""}</code>
+					<span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded flex-shrink-0 whitespace-nowrap text-gray-700 dark:text-gray-300">${item.source}</span>
+				</li>`;
+			})
+			.join("");
+		div.innerHTML = `<div class="domain-header-box"><h2 class="text-sm font-bold">${type}</h2><span class="badge-count">${typeItems.length}</span></div><ul class="space-y-1 ml-2">${itemsHtml}</ul>`;
+		frag.appendChild(div);
+	});
+
+	secretsDiv.appendChild(frag);
+	const sr = document.getElementById("secretsSearchResults");
+	if (currentSecretsSearchQuery && sr) {
+		sr.textContent = `Found ${items.length} secret${items.length !== 1 ? "s" : ""}`;
+		sr.classList.remove("hidden");
+	} else if (sr) {
+		sr.classList.add("hidden");
+	}
 }
 
 // === Encoding / Decoding ===
@@ -694,7 +1298,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		document.getElementById("openTabBtn").style.display = "none";
 		cachedDomain = urlParams.get("domain") || "";
 
-		chrome.storage.local.get(["savedLinks"], (data) => {
+		chrome.storage.local.get(["savedLinks", "savedSecrets"], (data) => {
 			if (data.savedLinks) {
 				allLinksGlobal = data.savedLinks;
 				renderLinks();
@@ -710,6 +1314,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 					});
 				}, 200);
 			}
+
+			if (data.savedSecrets) {
+				allSecretsGlobal = data.savedSecrets;
+			}
 		});
 	} else {
 		const [tab] = await chrome.tabs.query({
@@ -717,21 +1325,53 @@ document.addEventListener("DOMContentLoaded", async () => {
 			currentWindow: true,
 		});
 		if (tab.url.startsWith("chrome")) {
-			document.getElementById("results").innerHTML =
-				'<p class="text-red-500 text-center">Unavailable on this page.</p>';
+			const linksView = document.getElementById("links-view");
+			if (linksView) {
+				linksView.innerHTML =
+					'<p class="text-red-500 text-center">Unavailable on this page.</p>';
+			}
 			return;
 		}
 		try {
 			cachedDomain = new URL(tab.url).hostname;
 		} catch {}
 
+		// Collect links and secrets
+		console.log("[POPUP] Starting to collect secrets from page...");
+
 		chrome.scripting.executeScript(
 			{ target: { tabId: tab.id }, function: collectAllLinksInPage },
 			(results) => {
+				console.log(
+					"[POPUP] collectAllLinksInPage callback fired, results:",
+					results,
+				);
 				if (results?.[0]) {
 					allLinksGlobal = results[0].result;
 					chrome.storage.local.set({ savedLinks: allLinksGlobal });
 					renderLinks();
+				}
+			},
+		);
+
+		chrome.scripting.executeScript(
+			{ target: { tabId: tab.id }, function: collectSecretsFromPage },
+			(results) => {
+				console.log(
+					"[POPUP] collectSecretsFromPage callback fired, results:",
+					results,
+				);
+				if (results?.[0]) {
+					allSecretsGlobal = results[0].result;
+					console.log(
+						"[POPUP] allSecretsGlobal updated:",
+						allSecretsGlobal,
+					);
+					chrome.storage.local.set({
+						savedSecrets: allSecretsGlobal,
+					});
+					console.log("Secrets collected:", allSecretsGlobal);
+					setTimeout(() => renderSecrets(), 100);
 				}
 			},
 		);

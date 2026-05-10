@@ -245,6 +245,7 @@ html.dark .top-level-tab.tab-active {
 
 /* Sub-Tab Bar */
 #linksSubTabBar,
+#secretsSubTabBar,
 #cipherSubTabBar {
 	scrollbar-width: none;
 	gap: 24px;
@@ -252,16 +253,19 @@ html.dark .top-level-tab.tab-active {
 }
 
 #linksSubTabBar::-webkit-scrollbar,
+#secretsSubTabBar::-webkit-scrollbar,
 #cipherSubTabBar::-webkit-scrollbar {
 	display: none;
 }
 
 .sub-tab-item {
-	padding-bottom: 0.5rem;
+	padding: 0.5rem 0.5rem 0.5rem 0;
 	cursor: pointer;
 	color: var(--text-muted);
 	font-size: 0.85rem;
 	transition: all 0.3s ease;
+	white-space: nowrap;
+	flex-shrink: 0;
 }
 
 .sub-tab-active {

@@ -42,6 +42,7 @@
     <div id="topLevelTabBar"
         class="flex text-sm font-bold mb-6 overflow-x-auto whitespace-nowrap border-b-2 border-gray-200 dark:border-gray-700">
         <div data-toplevel="links" class="top-level-tab tab-active">Links</div>
+        <div data-toplevel="secrets" class="top-level-tab">Secrets</div>
         <div data-toplevel="cipher" class="top-level-tab">Cipher</div>
         <div data-toplevel="settings" class="top-level-tab">Settings</div>
     </div>
@@ -87,6 +88,35 @@
     </div>
 
     <!-- ============================================ -->
+    <!-- SECRETS TAB SECTION -->
+    <!-- ============================================ -->
+    <div id="secrets-section" class="section-content hidden">
+        <!-- Secrets Sub-Tab Bar -->
+        <div id="secretsSubTabBar"
+            class="flex text-xs font-bold mb-6 overflow-x-auto whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
+            <div data-subtab="secrets-all" class="sub-tab-item sub-tab-active">All</div>
+            <div data-subtab="secrets-apikeys" class="sub-tab-item">API Keys</div>
+            <div data-subtab="secrets-credentials" class="sub-tab-item">Credentials</div>
+            <div data-subtab="secrets-endpoints" class="sub-tab-item">Endpoints</div>
+            <div data-subtab="secrets-paths" class="sub-tab-item">Paths</div>
+            <div data-subtab="secrets-hiddenlinks" class="sub-tab-item">Hidden Links</div>
+            <div data-subtab="secrets-comments" class="sub-tab-item">Comments</div>
+        </div>
+
+        <!-- Secrets Content -->
+        <div id="secrets-content" class="mb-4">
+            <input type="text" id="secretsSearchInput" placeholder="Search secrets..." class="cyber-input">
+            <p id="secretsSearchResults" class="text-xs text-green-500 mt-2 hidden font-bold"></p>
+        </div>
+        <div id="secrets-view" class="space-y-4">
+            <div class="flex justify-center py-10">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+
     <!-- CIPHER TAB SECTION -->
     <!-- ============================================ -->
     <div id="cipher-section" class="section-content hidden">
@@ -243,7 +273,7 @@
                 </div>
 
                 <div style="margin-top: 16px; font-size: 0.875rem;">
-                    <p><strong>Version:</strong> 0.1.0</p>
+                    <p><strong>Version:</strong> 0.2.0</p>
                     <p><strong>Author:</strong> ncodevsec</p>
                     <p><strong>GitHub:</strong> <a href="https://github.com/ncodevsec/power-toys" target="_blank"
                             class="text-blue-500 hover:underline">github.com/ncodevsec/power-toys</a></p>
