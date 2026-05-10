@@ -325,14 +325,8 @@ function renderParams() {
 			searchParams.forEach((value, key) => {
 				const entry = (domParams[key] ||= {
 					values: new Set(),
-					sources: [],
 				});
 				entry.values.add(value);
-				if (!entry.sources.some((s) => s.fullUrl === link.fullUrl))
-					entry.sources.push({
-						path: link.path,
-						fullUrl: link.fullUrl,
-					});
 			});
 		} catch {}
 	}
@@ -384,9 +378,8 @@ function renderParams() {
 				return `<li class="text-sm">
 				<div class="flex items-center">
 					<span class="bullet-point mr-2">•</span>
-					<span class="font-semibold">${name}</span>
+					<span class="text-blue-500 font-semibold">${name}</span>
 					${sensitive ? '<span class="ml-2 text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 px-2 py-0.5 rounded">Sensitive</span>' : ""}
-					<span class="ml-2 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded">${data.sources.length} link${data.sources.length !== 1 ? "s" : ""}</span>
 				</div>
 				<div class="text-xs text-gray-600 dark:text-gray-400 ml-4 mt-2">
 					${values.map((v) => `<div class="break-all"><code>${v.substring(0, 50)}${v.length > 50 ? "..." : ""}</code></div>`).join("")}
