@@ -459,11 +459,29 @@ function collectSecretsFromPage() {
 		while ((match = pattern.exec(jsCode + cssCode))) {
 			let path = match[0];
 			if (VENDOR_RE.test(path)) continue;
+
+			// Skip if it's a full URL (starts with http:// or https://)
+			if (path.startsWith("http://") || path.startsWith("https://")) {
+				// This is actually a full URL/endpoint, skip it from paths
+				continue;
+			}
+
 			// Convert protocol-relative URLs to HTTPS
 			if (path.startsWith("//")) {
 				path = "https:" + path;
+				// Add to endpoints instead of paths if it's a full URL now
+				if (!linksFromTags.has(path)) {
+					if (!secrets.endpoints.find((e) => e.value === path))
+						secrets.endpoints.push({
+							type: "Endpoint",
+							value: path,
+							source: "JS/CSS Code",
+						});
+				}
+				continue;
 			}
-			// Skip if this path is already in the links tab
+
+			// Only add relative paths (starting with /)
 			if (!linksFromTags.has(path)) {
 				if (!secrets.paths.find((p) => p.value === path))
 					secrets.paths.push({
