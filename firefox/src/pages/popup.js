@@ -1,5 +1,11 @@
 "use strict";
 
+// ─── Firefox Compatibility ────────────────────────────────────────────────────
+// Use 'browser' API in Firefox, fall back to 'chrome' in Chrome
+if (typeof browser !== "undefined" && typeof chrome === "undefined") {
+	window.chrome = browser;
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let allLinksGlobal = [];
 let allSecretsGlobal = {
@@ -199,12 +205,12 @@ async function loadPatterns() {
 
 	await new Promise((resolve) => {
 		chrome.storage.sync.get(["sensitivePatterns"], (result) => {
-			if (result.sensitivePatterns) {
+			if (result && result.sensitivePatterns) {
 				applyPatterns(result.sensitivePatterns);
 				return resolve();
 			}
 			chrome.storage.local.get(["sensitivePatterns"], (local) => {
-				if (local.sensitivePatterns)
+				if (local && local.sensitivePatterns)
 					applyPatterns(local.sensitivePatterns);
 				resolve();
 			});
@@ -1580,6 +1586,8 @@ document
 	.getElementById("copyParamsBtn")
 	.addEventListener("click", function (e) {
 		const menu = document.getElementById("copyParamsMenu");
+		console.log("Style : " + menu.style.display);
+		// menu.style.display = "flex";
 		menu.style.display = menu.style.display === "none" ? "flex" : "none";
 		e.stopPropagation();
 	});
@@ -1665,7 +1673,7 @@ document.getElementById("openTabBtn").addEventListener("click", async () => {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 function loadPopupSettings() {
 	chrome.storage.local.get(["sensitivePatterns"], (local) => {
-		const patterns = local.sensitivePatterns || {
+		const patterns = (local && local.sensitivePatterns) || {
 			params: SENSITIVE_PATTERNS.params,
 			urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
 		};
@@ -1724,7 +1732,7 @@ function resetPopupToDefaults() {
 
 function exportPopupSettings() {
 	chrome.storage.local.get(["sensitivePatterns"], (result) => {
-		const patterns = result.sensitivePatterns || {
+		const patterns = (result && result.sensitivePatterns) || {
 			params: SENSITIVE_PATTERNS.params,
 			urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
 		};

@@ -1,15 +1,16 @@
 <div align="center">
 
-![Power Toys Logo](assets/images/power-toys-128.png)
+![Power Toys Logo](chrome/assets/images/power-toys-128.png)
 
 # Power Toys
 
 **An essential toolkit for pentesters and bug hunters**
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?logo=google-chrome&logoColor=white)](https://chrome.google.com)
+[![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://chrome.google.com)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.4.2-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.4.3-informational)](package.json)
 
 ---
 
@@ -17,7 +18,7 @@
 
 ## Overview
 
-Quickly extract links, encode/decode data, and simplify everyday security tasks with this lightweight, powerful Chrome extension. Perfect for pentesters, bug hunters, and security researchers.
+Quickly extract links, encode/decode data, and simplify everyday security tasks with this lightweight, powerful browser extension. Available for both Chrome and Firefox, it's perfect for pentesters, bug hunters, and security researchers.
 
 ## ✨ Features
 
@@ -36,17 +37,12 @@ Quickly extract links, encode/decode data, and simplify everyday security tasks 
 
 ## Installation
 
-### From Chrome Web Store _(Coming Soon)_
-
-Once available on the Chrome Web Store, install directly for automatic updates and easy distribution.
-
-### For Development
+### For Chrome
 
 1. **Clone the repository:**
 
     ```bash
     git clone https://github.com/ncodevsec/power-toys.git
-    cd power-toys
     ```
 
 2. **Open Chrome Extensions:**
@@ -55,7 +51,25 @@ Once available on the Chrome Web Store, install directly for automatic updates a
 
 3. **Load the extension:**
     - Click **Load unpacked**
-    - Select the `power-toys` folder
+    - Select the `power-toys/chrome` folder
+
+4. **Start using Power Toys!** ✅
+
+### For Firefox
+
+1. **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/ncodevsec/power-toys.git
+    ```
+
+2. **In Firefox URL bar:**
+    - Navigate to `about:debugging#/runtime/this-firefox`
+    - Click **This Firefox** in the left sidebar
+
+3. **Load the extension:**
+    - Click **Load Temporary Add-on**
+    - Select the `manifest.json` file from the `power-toys/firefox` folder
 
 4. **Start using Power Toys!** ✅
 
@@ -73,25 +87,43 @@ Right-click on any page element and select Power Toys options for instant access
 
 ```
 power-toys/
-├── manifest.json              # Extension manifest (Manifest V3)
+├── chrome/                    # Chrome extension (Manifest V3)
+│   ├── manifest.json          # Chrome manifest
+│   ├── config/
+│   │   └── defaults.json      # Default sensitive parameter patterns & keywords
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── popup.html     # Main popup interface with tab-based UI
+│   │   │   ├── popup.js       # Popup logic, event handlers, encoding/decoding
+│   │   │   ├── context-popup.html # Context menu quick access interface
+│   │   │   └── context-popup.js
+│   │   ├── scripts/
+│   │   │   └── background.js  # Service worker - link collection, context menus
+│   │   └── styles/
+│   │       ├── style.css      # Unified styling, dark mode support, responsive design
+│   │       └── tailwind.min.css
+│   └── assets/
+│       └── images/            # Icon and image assets
+├── firefox/                   # Firefox extension (Manifest V2 compatible)
+│   ├── manifest.json          # Firefox manifest
+│   ├── config/
+│   │   └── defaults.json      # Default sensitive parameter patterns & keywords
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── popup.html
+│   │   │   ├── popup.js
+│   │   │   ├── context-popup.html
+│   │   │   └── context-popup.js
+│   │   ├── scripts/
+│   │   │   ├── api-compat.js  # Firefox API compatibility layer
+│   │   │   └── background.js  # Background script for Firefox
+│   │   └── styles/
+│   │       ├── style.css
+│   │       └── tailwind.min.css
+│   └── assets/
+│       └── images/            # Icon and image assets
 ├── LICENSE                    # MIT License
-├── README.md                  # This file
-├── config/
-│   └── defaults.json          # Default sensitive parameter patterns & keywords
-├── src/
-│   ├── pages/
-│   │   ├── popup.html         # Main popup interface with tab-based UI
-│   │   ├── popup.js           # Popup logic, event handlers, encoding/decoding
-│   │   └── context-popup.html # Context menu quick access interface
-│   ├── scripts/
-│   │   └── background.js      # Service worker - link collection, context menus
-│   └── styles/
-│       └── style.css          # Unified styling, dark mode support, responsive design
-└── assets/
-    └── images/                # Icon and image assets
-        ├── power-toys-16.png
-        ├── power-toys-48.png
-        └── power-toys-128.png
+└── README.md                  # This file
 ```
 
 ## Core Functionalities
@@ -178,6 +210,8 @@ Automated detection of hardcoded secrets and sensitive patterns:
 
 ## Technical Details
 
+### Chrome Extension
+
 | Aspect               | Details                                                        |
 | -------------------- | -------------------------------------------------------------- |
 | **Manifest Version** | 3 (Latest Chrome Extension standard)                           |
@@ -187,13 +221,38 @@ Automated detection of hardcoded secrets and sensitive patterns:
 | **Popup Interface**  | `src/pages/popup.html` + `src/pages/popup.js`                  |
 | **Styling**          | Tailwind CSS 2.2.19 + Custom CSS (style.css)                   |
 | **Storage**          | Chrome Storage API for persistent configuration                |
-| **Author**           | [@ncodevsec](https://github.com/ncodevsec)                     |
+
+### Firefox Extension
+
+| Aspect                | Details                                                   |
+| --------------------- | --------------------------------------------------------- |
+| **Manifest Version**  | 2 (With V3 compatibility layer)                           |
+| **Permissions**       | activeTab, scripting, storage, contextMenus               |
+| **Host Permissions**  | All URLs (`<all_urls>`)                                   |
+| **Background Script** | `src/scripts/background.js` + `src/scripts/api-compat.js` |
+| **Popup Interface**   | `src/pages/popup.html` + `src/pages/popup.js`             |
+| **Styling**           | Tailwind CSS 2.2.19 + Custom CSS (style.css)              |
+| **Storage**           | Firefox Storage API for persistent configuration          |
+
+### General
+
+| Aspect     | Details                                    |
+| ---------- | ------------------------------------------ |
+| **Author** | [@ncodevsec](https://github.com/ncodevsec) |
 
 ## Requirements
+
+### Chrome
 
 - **Browser**: Chrome/Chromium v88+
 - **Platform**: Windows, macOS, or Linux
 - **Developer Mode**: Required for local installation
+
+### Firefox
+
+- **Browser**: Firefox 88+
+- **Platform**: Windows, macOS, or Linux
+- **Developer Mode**: Temporary add-on loading for testing
 
 ## License
 
