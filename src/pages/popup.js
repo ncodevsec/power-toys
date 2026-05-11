@@ -317,6 +317,19 @@ function collectSecretsFromPage() {
 				});
 		}
 
+		// Collect protocol-relative URLs first (starting with //)
+		const protocolRelativeUrls =
+			text.match(/\/\/[a-zA-Z0-9\-_.]+[^\s<>"'`\)]*[\w\/]/g) || [];
+		protocolRelativeUrls.forEach((url) => {
+			if (!secrets.hiddenLinks.find((l) => l.value === url))
+				secrets.hiddenLinks.push({
+					type: "Hidden URL",
+					value: url,
+					source: "HTML Comment",
+					context: text.substring(0, 100),
+				});
+		});
+
 		// Collect paths from comments (excluding HTML tags like textarea, xmp, etc.)
 		const paths = text.match(/\/[^\s<>"'`\)]*[\w\-]/g) || [];
 		const htmlTags = [
@@ -337,6 +350,8 @@ function collectSecretsFromPage() {
 			"form",
 		];
 		paths.forEach((path) => {
+			// Skip if path looks like a protocol-relative URL (contains //)
+			if (path.includes("//")) return;
 			// Skip if path is just an HTML tag name like /textarea, /xmp, /script, etc.
 			const pathName = path.substring(1).toLowerCase(); // Remove leading /
 			if (htmlTags.includes(pathName)) return;
@@ -438,17 +453,20 @@ function collectSecretsFromPage() {
 		while ((match = pattern.exec(jsCode + cssCode))) {
 			if (VENDOR_RE.test(match[0])) continue;
 			let endpoint = match[1];
+			let displayEndpoint = endpoint; // Keep original for display
 			// Fix protocol-relative URLs (// instead of https://)
 			if (endpoint?.startsWith("//")) {
-				endpoint = "https:" + endpoint;
+				endpoint = "https:" + endpoint; // For link functionality
+				displayEndpoint = match[1]; // Keep original for display
 			}
 			// Skip if this endpoint is already in the links tab
 			if (!linksFromTags.has(endpoint?.split("?")[0].split("#")[0])) {
-				if (!secrets.endpoints.find((e) => e.value === endpoint))
+				if (!secrets.endpoints.find((e) => e.value === displayEndpoint))
 					secrets.endpoints.push({
 						type: "Endpoint",
-						value: endpoint?.substring(0, 150),
+						value: displayEndpoint?.substring(0, 150),
 						source: "JS/CSS Code",
+						fullUrl: endpoint, // Store full URL separately for clicking
 					});
 			}
 		}
@@ -468,15 +486,17 @@ function collectSecretsFromPage() {
 			}
 
 			// Convert protocol-relative URLs to HTTPS
+			let displayPath = path;
 			if (path.startsWith("//")) {
-				path = "https:" + path;
+				const fullPath = "https:" + path;
 				// Add to endpoints instead of paths if it's a full URL now
-				if (!linksFromTags.has(path)) {
+				if (!linksFromTags.has(fullPath)) {
 					if (!secrets.endpoints.find((e) => e.value === path))
 						secrets.endpoints.push({
 							type: "Endpoint",
 							value: path,
 							source: "JS/CSS Code",
+							fullUrl: fullPath,
 						});
 				}
 				continue;
@@ -586,6 +606,9 @@ function collectSecretsFromPage() {
 		);
 		if (suspiciousMatches)
 			suspiciousMatches.forEach((match) => {
+				// Skip data URLs (not actual secrets)
+				if (match.includes("data:")) return;
+
 				if (!secrets.endpoints.find((s) => s.value === match))
 					secrets.endpoints.push({
 						type: "Resource (CSS)",
@@ -1267,7 +1290,29 @@ function renderSecrets() {
 	}
 
 	const grouped = {};
-	items.forEach((item) => (grouped[item.type] ||= []).push(item));
+
+	// Consolidation map: map all similar types to main categories
+	const categoryMap = {
+		"API Key": "API Keys",
+		Credential: "Credentials",
+		Endpoint: "URLs",
+		"Hidden URL": "URLs",
+		"Hidden Link": "URLs",
+		"Hidden Path": "Paths",
+		Path: "Paths",
+		"Resource (CSS)": "URLs",
+		"Data Attribute": "API Keys",
+		// Keep comment types separate
+		"HTML Comment": "HTML Comment",
+		"JavaScript Comment": "JavaScript Comment",
+		"CSS Comment": "CSS Comment",
+	};
+
+	// Group items by consolidated category
+	items.forEach((item) => {
+		const mainCategory = categoryMap[item.type] || item.type;
+		(grouped[mainCategory] ||= []).push(item);
+	});
 
 	const frag = document.createDocumentFragment();
 	Object.entries(grouped).forEach(([type, typeItems]) => {
@@ -1292,21 +1337,31 @@ function renderSecrets() {
 			type === "CSS Comment";
 		const isHiddenLinkType =
 			type === "Hidden Link" || type === "Hidden URL";
+		// Check if any items in this group are URL-like (Endpoint, Hidden Link, Hidden URL, Resource CSS)
+		const isUrlCategory = type === "URLs";
+		const isUrlType = (item) =>
+			item.type === "Endpoint" ||
+			item.type === "Hidden Link" ||
+			item.type === "Hidden URL" ||
+			item.type === "Resource (CSS)";
 
 		typeItems.forEach((item) => {
 			const val = item.pattern || item.value || item.content || "";
-			const lineCount = countLines(val);
+			// Add https: to protocol-relative URLs for display (but not for comments)
+			const displayValueForRendering =
+				!isCommentType && val.startsWith("//") ? "https:" + val : val;
+			const lineCount = countLines(displayValueForRendering);
 			const hasMultipleLines = lineCount > 5;
-			const isVeryLong = val.length > 150;
+			const isVeryLong = displayValueForRendering.length > 150;
 			const shouldTruncate = hasMultipleLines || isVeryLong;
 
 			let displayVal;
 			if (hasMultipleLines) {
-				displayVal = truncateToLines(val, 5);
+				displayVal = truncateToLines(displayValueForRendering, 5);
 			} else if (isVeryLong) {
-				displayVal = val.substring(0, 150);
+				displayVal = displayValueForRendering.substring(0, 150);
 			} else {
-				displayVal = val;
+				displayVal = displayValueForRendering;
 			}
 
 			const li = document.createElement("li");
@@ -1320,9 +1375,11 @@ function renderSecrets() {
 			code.className =
 				"text-xs bg-gray-900 text-green-400 px-2 py-1 rounded font-mono flex-1 break-all";
 
-			if (isHiddenLinkType) {
+			// Render as link if it's a URL-type item
+			if (isHiddenLinkType || (isUrlCategory && isUrlType(item))) {
 				const a = document.createElement("a");
-				a.href = val;
+				// Use fullUrl if available (for protocol-relative URLs), otherwise use val
+				a.href = item.fullUrl || val;
 				a.target = "_blank";
 				a.rel = "noopener noreferrer";
 				a.className = "text-blue-400 hover:underline font-mono";
