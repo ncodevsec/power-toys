@@ -7,7 +7,9 @@
 	--text-muted: #64748b;
 	--border-color: #e2e8f0;
 	--accent-blue: #3b82f6;
+	--accent-green:#3bf699;
 	--accent-red: #ef4444;
+	--accent-yellow: #ffd651;
 	--container-width: 650px;
 	/* Reusable spacing & borders */
 	--border-radius-sm: 0.5rem;
@@ -130,6 +132,7 @@ html.dark .cyber-card:hover {
 	cursor: pointer;
 	transition: all 0.1s ease;
 	white-space: nowrap;
+	text-align: center;
 }
 
 .btn.filter-active {
@@ -427,15 +430,18 @@ html.dark .bullet-point {
 	filter: brightness(1.1);
 }
 
-.btn-orange {
-	background: linear-gradient(135deg, #ea580c, #f97316);
+.btn-yellow {
+	border: 1px solid var(--border-color);
+	color: var(--accent-yellow);
+	/* background: linear-gradient(135deg, #ea580c, #f97316); */
 }
-.btn-orange:hover {
+.btn-yellow:hover {
 	filter: brightness(1.1);
 }
 
 .btn-green {
-	background: linear-gradient(135deg, #059669, #10b981);
+	border: 1px solid var(--border-color);
+	color: var(--accent-green);
 }
 .btn-green:hover {
 	filter: brightness(1.1);

@@ -1270,11 +1270,17 @@ function renderSecrets() {
 			const val = item.pattern || item.value || item.content || "";
 			const lineCount = countLines(val);
 			const hasMultipleLines = lineCount > 5;
-			const displayVal = hasMultipleLines
-				? truncateToLines(val, 5)
-				: isCommentType
-					? val
-					: val.substring(0, 150);
+			const isVeryLong = val.length > 150;
+			const shouldTruncate = hasMultipleLines || isVeryLong;
+
+			let displayVal;
+			if (hasMultipleLines) {
+				displayVal = truncateToLines(val, 5);
+			} else if (isVeryLong) {
+				displayVal = val.substring(0, 150);
+			} else {
+				displayVal = val;
+			}
 
 			const li = document.createElement("li");
 			li.className = "flex items-center justify-between text-sm gap-2";
@@ -1298,7 +1304,9 @@ function renderSecrets() {
 			} else {
 				code.textContent =
 					displayVal +
-					(!isCommentType && val.length > 150 && !hasMultipleLines
+					(shouldTruncate &&
+					!isCommentType &&
+					val.length > displayVal.length
 						? "..."
 						: "") +
 					(hasMultipleLines ? "\n..." : "");
@@ -1306,9 +1314,10 @@ function renderSecrets() {
 			inner.append(bullet, code);
 			li.appendChild(inner);
 
-			// Add "View Full" button if content has more than 5 lines
-			if (hasMultipleLines) {
+			// Add "View Full" button if content was truncated
+			if (val.length > displayVal.length) {
 				const viewBtn = document.createElement("button");
+				viewBtn.type = "button";
 				viewBtn.className = "btn btn-blue text-xs px-2 py-1";
 				viewBtn.textContent = "View Full";
 				viewBtn.addEventListener("click", (e) => {

@@ -9,7 +9,7 @@
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?logo=google-chrome&logoColor=white)](https://chrome.google.com)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.3.9-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.4.0-informational)](package.json)
 
 ---
 
