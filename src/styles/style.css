@@ -291,6 +291,13 @@ html.dark .top-level-tab.tab-active {
 	flex-shrink: 0;
 }
 
+/* File types tab bar - allow wrapping */
+#fileTypesTabs {
+	white-space: normal !important;
+	flex-wrap: wrap !important;
+	flex-shrink: 1 !important;
+}
+
 #linksSubTabBar::-webkit-scrollbar,
 #secretsSubTabBar::-webkit-scrollbar,
 #cipherSubTabBar::-webkit-scrollbar {
