@@ -9,6 +9,18 @@
 	--accent-blue: #3b82f6;
 	--accent-red: #ef4444;
 	--container-width: 650px;
+	/* Reusable spacing & borders */
+	--border-radius-sm: 0.5rem;
+	--border-radius-md: 6px;
+	--border-radius-lg: 12px;
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+	--shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+	--transition: all 0.1s ease;
+	--font-sans:
+		"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		sans-serif;
+	--font-mono: "Courier New", monospace;
 }
 
 /* OpenClaw Inspired Dark Palette */
@@ -24,19 +36,13 @@ html.dark {
 }
 
 * {
-	font-family:
-		"Inter",
-		-apple-system,
-		BlinkMacSystemFont,
-		"Segoe UI",
-		Roboto,
-		sans-serif;
+	font-family: var(--font-sans);
 }
 
 body {
 	width: var(--container-width);
 	margin: 0;
-	transition: all 0.1s ease;
+	transition: var(--transition);
 	background-color: var(--bg-main);
 	color: var(--text-main);
 	min-height: 100vh;
@@ -75,11 +81,11 @@ html.dark body {
 	background-color: var(--bg-card);
 	backdrop-filter: blur(8px);
 	border: 1px solid var(--border-color);
-	border-radius: 12px;
+	border-radius: var(--border-radius-lg);
 	padding: 1.25rem;
 	margin-bottom: 1rem;
-	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-	transition: all 0.1s ease;
+	box-shadow: var(--shadow-sm);
+	transition: var(--transition);
 }
 
 html.dark .cyber-card:hover {
@@ -92,23 +98,49 @@ html.dark .cyber-card:hover {
 	margin-bottom: 1rem;
 	background-color: var(--bg-header);
 	padding: 0.5rem;
-	border-radius: 0.5rem;
-	transition: all 0.1s ease;
+	border-radius: var(--border-radius-sm);
+	transition: var(--transition);
 }
 
 .cyber-input {
 	width: 100%;
 	padding: 0.5rem 1.5rem 0.5rem 0.75rem; /* ডানপাশে একটু বেশি প্যাডিং (1.5rem) দেওয়া হয়েছে অ্যারো-র জন্য */
 	border: 1px solid var(--border-color);
-	border-radius: 0.5rem;
+	border-radius: var(--border-radius-sm);
 	background-color: var(--bg-card);
 	color: var(--text-main);
 	outline: none;
-	transition: all 0.1s ease;
+	transition: var(--transition);
 	cursor: pointer;
 	/* hide default arrow (optional if custom arrow is used) */
 	/* -webkit-appearance: none; 
     appearance: none; */
+}
+.btn {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0.3rem 0.5rem;
+	font-size: 0.7rem;
+	font-weight: bold;
+	color: var(--text-main);
+	background-color: transparent;
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.1s ease;
+	white-space: nowrap;
+}
+
+.btn.filter-active {
+	color: white;
+	background-color: var(--accent-red);
+	border-color: var(--accent-red);
+}
+
+.btn.filter-active:hover {
+	background-color: #dc2626;
+	border-color: #dc2626;
 }
 .tab-bar-btn {
 	display: flex;
@@ -248,9 +280,13 @@ html.dark .top-level-tab.tab-active {
 	overflow-x: auto;
 }
 
+.sub-tab-bar.hidden {
+	display: none;
+}
+
 .sub-tab-bar > * {
 	display: flex;
-	gap: 1rem;
+	gap: 0.6rem;
 	white-space: nowrap;
 	flex-shrink: 0;
 }
@@ -272,6 +308,7 @@ html.dark .top-level-tab.tab-active {
 	display: flex;
 	align-items: center;
 	gap: 0.3rem;
+	position: relative;
 }
 
 .count-badge {
@@ -375,7 +412,9 @@ html.dark .bullet-point {
 }
 
 .btn-blue {
-	background: linear-gradient(135deg, #2563eb, #3b82f6);
+	border: 1px solid linear-gradient(135deg, #2563eb, #3b82f6);
+	color: var(--accent-blue);
+	/* background: linear-gradient(135deg, #2563eb, #3b82f6); */
 }
 .btn-blue:hover {
 	filter: brightness(1.1);
@@ -530,21 +569,23 @@ html.dark select.cyber-input {
 	display: none;
 }
 
-/* Repeat Counter Badge */
+/* Repeat Counter Badge - Modern Style */
 .repeat-counter {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 1.5rem;
-	height: 1.5rem;
-	padding: 0 0.4rem;
-	background-color: rgba(239, 68, 68, 0.2);
-	color: var(--accent-red);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	background: linear-gradient(135deg, var(--accent-red), #ef4444);
+	color: white;
 	border-radius: 50%;
-	font-size: 0.75rem;
-	font-weight: bold;
-	border: 1px solid rgba(239, 68, 68, 0.3);
+	font-size: 0.65rem;
+	font-weight: 700;
+	border: 2px solid var(--bg-card);
 	margin-right: 0.25rem;
+	box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+	animation: badgePulse 0.3s ease-out;
 }
 
 /* Sensitive Link/Param Styling */
@@ -974,4 +1015,126 @@ html.dark .info-box-settings {
 	pointer-events: none;
 	color: #fff;
 	background: #3b82f6;
+}
+/* ─── Modal Styling ──────────────────────────────────────────────────────────── */
+
+.modal {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10000;
+}
+
+.modal.hidden {
+	display: none;
+}
+
+.modal-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(4px);
+}
+
+.modal-content {
+	position: relative;
+	background-color: var(--bg-card);
+	border: 1px solid var(--border-color);
+	border-radius: 12px;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+	display: flex;
+	flex-direction: column;
+	width: 90%;
+	max-width: 800px;
+	max-height: 85vh;
+	z-index: 10001;
+	animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--border-color);
+	background-color: var(--bg-header);
+	border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--text-main);
+}
+
+.modal-close-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-muted);
+	transition: color 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+}
+
+.modal-close-btn:hover {
+	color: var(--text-main);
+}
+
+.modal-body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1.5rem;
+}
+
+.modal-pre {
+	margin: 0;
+	padding: 1rem;
+	background-color: var(--bg-main);
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	font-family: "Courier New", monospace;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--text-main);
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow-x: auto;
+}
+
+.modal-footer {
+	padding: 1rem 1.5rem;
+	border-top: 1px solid var(--border-color);
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	background-color: var(--bg-header);
+	border-radius: 0 0 12px 12px;
+}
+
+.modal-footer .cyber-btn {
+	padding: 0.5rem 1rem;
+	font-size: 0.875rem;
 }

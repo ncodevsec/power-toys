@@ -68,6 +68,15 @@ function collectSecretsMinimal() {
 		],
 	};
 
+	// Collect all href and src URLs from anchor tags to exclude them from secrets
+	const linksFromTags = new Set();
+	const selectors =
+		"a[href],link[href],script[src],img[src],iframe[src],source[src],video[src],audio[src],[data-url]";
+	for (const tag of document.querySelectorAll(selectors)) {
+		const url = tag.href || tag.src || tag.getAttribute("data-url");
+		if (url) linksFromTags.add(url.split("?")[0].split("#")[0]);
+	}
+
 	// Scan HTML comments
 	const walker = document.createTreeWalker(
 		document.documentElement,
@@ -90,8 +99,29 @@ function collectSecretsMinimal() {
 			}
 		});
 
+		// Collect paths from comments (excluding HTML tags like textarea, xmp, etc.)
 		const paths = text.match(/\/[^\s<>"'`\)]*[\w\-]/g) || [];
+		const htmlTags = [
+			"textarea",
+			"xmp",
+			"script",
+			"style",
+			"pre",
+			"code",
+			"title",
+			"body",
+			"head",
+			"html",
+			"div",
+			"span",
+			"p",
+			"a",
+			"form",
+		];
 		paths.forEach((path) => {
+			// Skip if path is just an HTML tag name like /textarea, /xmp, /script, etc.
+			const pathName = path.substring(1).toLowerCase(); // Remove leading /
+			if (htmlTags.includes(pathName)) return;
 			if (
 				path.length > 2 &&
 				!secrets.hiddenLinks.find((l) => l.value === path)
@@ -112,14 +142,30 @@ function collectSecretsMinimal() {
 		});
 	}
 
-	// Scan page source for patterns
-	const allHtml = document.documentElement.outerHTML;
+	// Extract JS and CSS code only to scan for secrets
+	let jsCode = "";
+	let cssCode = "";
 
+	for (const script of document.querySelectorAll("script:not([src])")) {
+		jsCode += "\n" + (script.textContent || "");
+	}
+
+	for (const style of document.querySelectorAll("style")) {
+		cssCode += "\n" + (style.textContent || "");
+	}
+
+	const searchCode = jsCode + cssCode;
+
+	// Scan JS/CSS code for patterns
 	Object.entries(secretPatterns).forEach(([category, patterns]) => {
 		patterns.forEach((pattern) => {
 			let match;
-			while ((match = pattern.exec(allHtml)) !== null) {
-				const value = match[1] || match[0];
+			while ((match = pattern.exec(searchCode)) !== null) {
+				let value = match[1] || match[0];
+				// Fix protocol-relative URLs (// instead of https://)
+				if (value?.startsWith("//")) {
+					value = "https:" + value;
+				}
 				if (category === "apiKeys") {
 					if (!secrets.apiKeys.find((x) => x.value === value))
 						secrets.apiKeys.push({ type: "API Key", value });
@@ -127,11 +173,19 @@ function collectSecretsMinimal() {
 					if (!secrets.credentials.find((x) => x.value === value))
 						secrets.credentials.push({ type: "Credential", value });
 				} else if (category === "endpoints") {
-					if (!secrets.endpoints.find((x) => x.value === value))
-						secrets.endpoints.push({ type: "Endpoint", value });
+					// Skip if this endpoint is already in the links tab
+					if (
+						!linksFromTags.has(value?.split("?")[0].split("#")[0])
+					) {
+						if (!secrets.endpoints.find((x) => x.value === value))
+							secrets.endpoints.push({ type: "Endpoint", value });
+					}
 				} else if (category === "paths") {
-					if (!secrets.paths.find((x) => x.value === value))
-						secrets.paths.push({ type: "Path", value });
+					// Skip if this path is already in the links tab
+					if (!linksFromTags.has(value)) {
+						if (!secrets.paths.find((x) => x.value === value))
+							secrets.paths.push({ type: "Path", value });
+					}
 				}
 			}
 		});

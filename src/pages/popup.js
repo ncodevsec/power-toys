@@ -16,8 +16,41 @@ let currentSearchQuery = "";
 let currentSecretsSearchQuery = "";
 let showOnlySensitiveLinks = false;
 let cachedDomain = "";
+let currentFileType = null; // null means "All" for Files category
 let SENSITIVE_PATTERNS = { params: [], urlPatterns: [] };
 let DEFAULT_PATTERNS_RAW = { params: [], urlPatterns: [] };
+
+// Predefined order of file types
+const FILE_TYPE_ORDER = [
+	"js",
+	"json",
+	"php",
+	"css",
+	"html",
+	"xml",
+	"yaml",
+	"yml",
+	"csv",
+	"svg",
+	"png",
+	"jpg",
+	"jpeg",
+	"gif",
+	"webp",
+	"ico",
+	"pdf",
+	"zip",
+	"tar",
+	"gz",
+	"txt",
+	"md",
+	"doc",
+	"docx",
+	"xls",
+	"xlsx",
+	"ppt",
+	"pptx",
+];
 
 // ─── Encoding functions (single source of truth) ──────────────────────────────
 const encodingFunctions = {
@@ -69,6 +102,45 @@ function escapeHtml(str) {
 	const d = document.createElement("div");
 	d.textContent = str;
 	return d.innerHTML;
+}
+
+// ─── DOM Helper — reduce redundant createElement calls ────────────────────────
+function createElement(tag, className = "", textContent = "", attributes = {}) {
+	const el = document.createElement(tag);
+	if (className) el.className = className;
+	if (textContent) el.textContent = textContent;
+	Object.entries(attributes).forEach(([key, val]) =>
+		el.setAttribute(key, val),
+	);
+	return el;
+}
+
+// ─── Count and truncate lines helpers ──────────────────────────────────────────
+function countLines(text) {
+	if (!text) return 0;
+	return text.split("\n").length;
+}
+
+function truncateToLines(text, maxLines) {
+	if (!text) return text;
+	const lines = text.split("\n");
+	if (lines.length <= maxLines) return text;
+	return lines.slice(0, maxLines).join("\n");
+}
+
+function openModal(title, content) {
+	const modal = document.getElementById("itemModal");
+	const modalTitle = document.getElementById("modalTitle");
+	const modalContent = document.getElementById("modalContent");
+
+	modalTitle.textContent = title;
+	modalContent.textContent = content;
+	modal.classList.remove("hidden");
+}
+
+function closeModal() {
+	const modal = document.getElementById("itemModal");
+	modal.classList.add("hidden");
 }
 
 // ─── Toast notification — replaces alert() calls ─────────────────────────────
@@ -153,11 +225,14 @@ function collectAllLinksInPage() {
 
 		const cleanUrl = url.split("?")[0].split("#")[0];
 		let category;
-		if (cleanUrl.endsWith(".js")) category = "JavaScript";
-		else if (cleanUrl.endsWith(".json")) category = "JSON";
-		else if (IMG_RE.test(cleanUrl)) category = "Images";
-		else if (EXT_RE.test(cleanUrl)) category = "Others";
-		else category = "Paths";
+		const EXT_RE = /\.[a-zA-Z0-9]+$/;
+		if (EXT_RE.test(cleanUrl)) category = "Files";
+		else if (
+			cleanUrl.endsWith("/") ||
+			cleanUrl.split("/").pop().indexOf(".") === -1
+		)
+			category = "Paths";
+		else category = "Others";
 
 		try {
 			const { hostname, pathname, search, hash } = new URL(url);
@@ -207,7 +282,16 @@ function collectSecretsFromPage() {
 	const VENDOR_RE =
 		/grammarly|live-server|chrome-extension|injected|hb-blur|sessionStorage|Service Worker/i;
 
-	// Scan HTML comments
+	// Collect all href and src URLs from anchor tags to exclude them from secrets
+	const linksFromTags = new Set();
+	const selectors =
+		"a[href],link[href],script[src],img[src],iframe[src],source[src],video[src],audio[src],[data-url]";
+	for (const tag of document.querySelectorAll(selectors)) {
+		const url = tag.href || tag.src || tag.getAttribute("data-url");
+		if (url) linksFromTags.add(url.split("?")[0].split("#")[0]);
+	}
+
+	// Scan HTML comments for hidden links and paths from COMMENTS ONLY
 	const walker = document.createTreeWalker(
 		document.documentElement,
 		NodeFilter.SHOW_COMMENT,
@@ -218,7 +302,7 @@ function collectSecretsFromPage() {
 		const text = comment.textContent || comment.nodeValue || "";
 		if (!text) continue;
 
-		// href extraction
+		// Only collect href references from comments (not in main page tags)
 		const hrefRe = /href\s*=\s*['"]*([\S'">\]]+)/gi;
 		let hm;
 		while ((hm = hrefRe.exec(text)) !== null) {
@@ -232,8 +316,29 @@ function collectSecretsFromPage() {
 				});
 		}
 
+		// Collect paths from comments (excluding HTML tags like textarea, xmp, etc.)
 		const paths = text.match(/\/[^\s<>"'`\)]*[\w\-]/g) || [];
+		const htmlTags = [
+			"textarea",
+			"xmp",
+			"script",
+			"style",
+			"pre",
+			"code",
+			"title",
+			"body",
+			"head",
+			"html",
+			"div",
+			"span",
+			"p",
+			"a",
+			"form",
+		];
 		paths.forEach((path) => {
+			// Skip if path is just an HTML tag name like /textarea, /xmp, /script, etc.
+			const pathName = path.substring(1).toLowerCase(); // Remove leading /
+			if (htmlTags.includes(pathName)) return;
 			if (
 				path.length > 2 &&
 				!secrets.hiddenLinks.find((l) => l.value === path)
@@ -246,6 +351,7 @@ function collectSecretsFromPage() {
 				});
 		});
 
+		// Collect URLs from comments
 		const urls = text.match(/https?:\/\/[^\s<>"'`\)]+/g) || [];
 		urls.forEach((url) => {
 			if (!secrets.hiddenLinks.find((l) => l.value === url))
@@ -257,6 +363,7 @@ function collectSecretsFromPage() {
 				});
 		});
 
+		// Collect suspicious links from comments
 		const suspiciousLinks = text.match(
 			/['"](\/[^\s'"]*(?:debug|admin|api|internal|private|secret|backup)[^\s'"]*)["']/gi,
 		);
@@ -282,66 +389,109 @@ function collectSecretsFromPage() {
 		});
 	}
 
-	const allHtml = document.documentElement.outerHTML;
+	// Extract JS and CSS code only (not full HTML) to avoid scanning href attributes
+	let jsCode = "";
+	let cssCode = "";
 
+	// Collect inline scripts
+	for (const script of document.querySelectorAll("script:not([src])")) {
+		jsCode += "\n" + (script.textContent || "");
+	}
+
+	// Collect inline styles
+	for (const style of document.querySelectorAll("style")) {
+		cssCode += "\n" + (style.textContent || "");
+	}
+
+	// Search for API keys in JS and CSS code only
 	for (const pattern of secretPatterns.apiKeys) {
 		let match;
-		while ((match = pattern.exec(allHtml))) {
+		while ((match = pattern.exec(jsCode + cssCode))) {
 			if (VENDOR_RE.test(match[0])) continue;
 			secrets.apiKeys.push({
 				type: "API Key",
 				pattern: match[0].substring(0, 100),
 				value: match[1]?.substring(0, 100),
-				source: "HTML/JS",
+				source: "JS/CSS Code",
 			});
 		}
 	}
+
+	// Search for credentials in JS and CSS code only
 	for (const pattern of secretPatterns.credentials) {
 		let match;
-		while ((match = pattern.exec(allHtml))) {
+		while ((match = pattern.exec(jsCode + cssCode))) {
 			if (VENDOR_RE.test(match[0])) continue;
 			secrets.credentials.push({
 				type: "Credential",
 				pattern: match[0].substring(0, 100),
 				value: match[1]?.substring(0, 100),
-				source: "HTML/JS",
+				source: "JS/CSS Code",
 			});
-		}
-	}
-	for (const pattern of secretPatterns.endpoints) {
-		let match;
-		while ((match = pattern.exec(allHtml))) {
-			if (VENDOR_RE.test(match[0])) continue;
-			secrets.endpoints.push({
-				type: "Endpoint",
-				value: match[1]?.substring(0, 150),
-				source: "HTML/JS",
-			});
-		}
-	}
-	for (const pattern of secretPatterns.paths) {
-		let match;
-		while ((match = pattern.exec(allHtml))) {
-			const path = match[0];
-			if (VENDOR_RE.test(path)) continue;
-			if (!secrets.paths.find((p) => p.value === path))
-				secrets.paths.push({
-					type: "Path",
-					value: path,
-					source: "HTML/JS",
-				});
 		}
 	}
 
-	// Inline scripts
+	// Search for endpoints in JS and CSS code only (exclude those from links tab)
+	for (const pattern of secretPatterns.endpoints) {
+		let match;
+		while ((match = pattern.exec(jsCode + cssCode))) {
+			if (VENDOR_RE.test(match[0])) continue;
+			let endpoint = match[1];
+			// Fix protocol-relative URLs (// instead of https://)
+			if (endpoint?.startsWith("//")) {
+				endpoint = "https:" + endpoint;
+			}
+			// Skip if this endpoint is already in the links tab
+			if (!linksFromTags.has(endpoint?.split("?")[0].split("#")[0])) {
+				if (!secrets.endpoints.find((e) => e.value === endpoint))
+					secrets.endpoints.push({
+						type: "Endpoint",
+						value: endpoint?.substring(0, 150),
+						source: "JS/CSS Code",
+					});
+			}
+		}
+	}
+
+	// Search for paths in JS and CSS code only (exclude those from links tab)
+	for (const pattern of secretPatterns.paths) {
+		let match;
+		while ((match = pattern.exec(jsCode + cssCode))) {
+			let path = match[0];
+			if (VENDOR_RE.test(path)) continue;
+			// Convert protocol-relative URLs to HTTPS
+			if (path.startsWith("//")) {
+				path = "https:" + path;
+			}
+			// Skip if this path is already in the links tab
+			if (!linksFromTags.has(path)) {
+				if (!secrets.paths.find((p) => p.value === path))
+					secrets.paths.push({
+						type: "Path",
+						value: path,
+						source: "JS/CSS Code",
+					});
+			}
+		}
+	}
+
+	// Scan inline scripts for comments, API keys, credentials, endpoints, and paths
 	for (const script of document.querySelectorAll("script:not([src])")) {
 		const code = script.textContent;
 		if (!code) continue;
 
-		const singleLineComments = code.match(/\/\/.*$/gm) || [];
+		// Collect comments from scripts
+		const singleLineComments = code.match(/(?<!:)\/\/.*$/gm) || [];
 		singleLineComments.forEach((c) => {
 			const cleaned = c.replace(/^\/\/\s*/, "").trim();
-			if (cleaned)
+			// Skip CDATA markers, URL protocol markers (://), and lines that are just paths
+			// Don't filter if it looks like a real comment (has words/context)
+			const isJustUrl = /^https?:\/\/|^\/\//.test(cleaned);
+			if (
+				cleaned &&
+				!cleaned.match(/^<!\[CDATA\[|^\]\]>/) &&
+				!isJustUrl
+			) {
 				secrets.comments.push({
 					type: "JavaScript Comment",
 					content: `// ${cleaned}`,
@@ -349,6 +499,7 @@ function collectSecretsFromPage() {
 					sourceUrl: window.location.href,
 					sourceText: cleaned,
 				});
+			}
 		});
 
 		const multiLineComments = code.match(/\/\*[\s\S]*?\*\//g) || [];
@@ -367,43 +518,30 @@ function collectSecretsFromPage() {
 				});
 		});
 
-		const apiKeyMatches = code.match(
-			/(?:api[_-]?key|apikey|api_secret|token|auth_token)\s*[:=]\s*['"`]([a-zA-Z0-9\-_.]{8,})[`'"]/gi,
-		);
-		if (apiKeyMatches)
-			apiKeyMatches.forEach((match) => {
-				if (!secrets.apiKeys.find((s) => s.pattern === match))
-					secrets.apiKeys.push({
-						type: "API Key (Script)",
-						pattern: match.substring(0, 100),
-						source: "Script",
-					});
-			});
+		// Note: API Keys and credentials are already scanned in jsCode above
+	}
 
-		const credMatches = code.match(
-			/(?:password|passwd|pwd)\s*[:=]\s*['"`]([^'"`\s]+)[`'"]/gi,
-		);
-		if (credMatches)
-			credMatches.forEach((match) => {
-				secrets.credentials.push({
-					type: "Credential (Script)",
-					pattern: match.substring(0, 100),
-					source: "Script",
+	// CSS comment scanning and endpoints/paths
+	for (const style of document.querySelectorAll("style")) {
+		const css = style.textContent;
+		if (!css) continue;
+
+		// Collect comments from styles
+		const cssComments = css.match(/\/\*[\s\S]*?\*\//g) || [];
+		cssComments.forEach((c) => {
+			const cleaned = c
+				.replace(/^\/\*\s*/, "")
+				.replace(/\s*\*\/$/, "")
+				.trim();
+			if (cleaned)
+				secrets.comments.push({
+					type: "CSS Comment",
+					content: `/* ${cleaned} */`,
+					source: "Style",
+					sourceUrl: window.location.href,
+					sourceText: cleaned,
 				});
-			});
-
-		const endpointMatches = code.match(
-			/(https?:\/\/[a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})?(?:\/[^\s'"`]*)?)/g,
-		);
-		if (endpointMatches)
-			endpointMatches.forEach((match) => {
-				if (!secrets.endpoints.find((s) => s.value === match))
-					secrets.endpoints.push({
-						type: "Endpoint (Script)",
-						value: match.substring(0, 150),
-						source: "Script",
-					});
-			});
+		});
 	}
 
 	// Inline styles
@@ -556,15 +694,15 @@ document.getElementById("linksSubTabBar").addEventListener("click", (e) => {
 		.querySelectorAll("#linksSubTabBar .sub-tab-item")
 		.forEach((el) => el.classList.remove("sub-tab-active"));
 	e.target.classList.add("sub-tab-active");
+
 	const CAT_MAP = {
 		"links-all": "All",
 		"links-paths": "Paths",
-		"links-javascript": "JavaScript",
-		"links-json": "JSON",
-		"links-images": "Images",
+		"links-files": "Files",
 		"links-others": "Others",
 	};
 	currentCategory = CAT_MAP[subTab] || "All";
+	currentFileType = null; // Reset file type when category changes
 	renderLinks();
 });
 
@@ -591,6 +729,24 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
 	renderLinks();
 });
 
+// Handle nested file type tab clicks
+document.addEventListener("click", (e) => {
+	if (!e.target.closest("#fileTypesSubTabBar")) return;
+	const fileTypeTab = e.target.closest(".sub-tab-item");
+	if (!fileTypeTab || !fileTypeTab.closest("#fileTypesTabs")) return;
+
+	document
+		.querySelectorAll("#fileTypesTabs .sub-tab-item")
+		.forEach((el) => el.classList.remove("sub-tab-active"));
+	fileTypeTab.classList.add("sub-tab-active");
+	const fileTypeValue = fileTypeTab.dataset.fileType;
+	currentFileType =
+		fileTypeValue === "null" || fileTypeValue === undefined
+			? null
+			: fileTypeValue;
+	renderLinks();
+});
+
 document.addEventListener("input", (e) => {
 	if (e.target.id === "secretsSearchInput") {
 		currentSecretsSearchQuery = e.target.value.toLowerCase();
@@ -602,14 +758,25 @@ document.addEventListener("input", (e) => {
 	}
 });
 
+// ─── Search Results Helper ────────────────────────────────────────────────────
+function updateSearchResults(elementId, itemCount, searchQuery) {
+	const el = document.getElementById(elementId);
+	if (!el) return;
+	if (searchQuery) {
+		el.textContent = `Found ${itemCount} ${itemCount !== 1 ? "item" : "items"}`;
+		el.classList.remove("hidden");
+	} else {
+		el.classList.add("hidden");
+	}
+}
+
 // ─── Badge helper ─────────────────────────────────────────────────────────────
 function setBadge(selector, count) {
 	const el = document.querySelector(`[data-subtab="${selector}"]`);
 	if (!el) return;
 	let badge = el.querySelector(".count-badge");
 	if (!badge) {
-		badge = document.createElement("span");
-		badge.className = "count-badge";
+		badge = createElement("span", "count-badge");
 		el.appendChild(badge);
 	}
 	badge.textContent = count;
@@ -622,16 +789,8 @@ function updateLinksSubtabCounts() {
 		allLinksGlobal.filter((l) => l.category === "Paths").length,
 	);
 	setBadge(
-		"links-javascript",
-		allLinksGlobal.filter((l) => l.category === "JavaScript").length,
-	);
-	setBadge(
-		"links-json",
-		allLinksGlobal.filter((l) => l.category === "JSON").length,
-	);
-	setBadge(
-		"links-images",
-		allLinksGlobal.filter((l) => l.category === "Images").length,
+		"links-files",
+		allLinksGlobal.filter((l) => l.category === "Files").length,
 	);
 	setBadge(
 		"links-others",
@@ -656,13 +815,121 @@ function updateSecretsSubtabCounts() {
 	setBadge("secrets-comments", allSecretsGlobal.comments.length);
 }
 
+// Helper function to get file extension from URL
+function getFileExtension(url) {
+	const cleanUrl = url.split("?")[0].split("#")[0];
+	const match = cleanUrl.match(/\.([a-zA-Z0-9]+)$/);
+	return match ? match[1].toLowerCase() : null;
+}
+
+// Helper function to get sorted unique file types with their counts
+function getSortedFileTypesWithCounts(links) {
+	const fileTypeMap = new Map(); // fileType -> count
+
+	for (const link of links) {
+		if (link.category === "Files") {
+			const ext = getFileExtension(link.fullUrl);
+			if (ext) {
+				fileTypeMap.set(ext, (fileTypeMap.get(ext) || 0) + 1);
+			}
+		}
+	}
+
+	// Sort by predefined order, then append any unknown types alphabetically
+	const sorted = [];
+	for (const fileType of FILE_TYPE_ORDER) {
+		if (fileTypeMap.has(fileType)) {
+			sorted.push({ type: fileType, count: fileTypeMap.get(fileType) });
+		}
+	}
+	// Add remaining file types alphabetically
+	const remaining = Array.from(fileTypeMap.entries())
+		.filter(([type]) => !FILE_TYPE_ORDER.includes(type))
+		.sort((a, b) => a[0].localeCompare(b[0]))
+		.map(([type, count]) => ({ type, count }));
+	sorted.push(...remaining);
+
+	return sorted;
+}
+
+// Helper function to render file type subtabs
+function renderFileTypeSubtabs(links) {
+	const fileTypesBar = document.getElementById("fileTypesSubTabBar");
+	const fileTypesTabs = document.getElementById("fileTypesTabs");
+
+	if (currentCategory !== "Files") {
+		fileTypesBar.classList.add("hidden");
+		return;
+	}
+
+	const fileTypesWithCounts = getSortedFileTypesWithCounts(links);
+	if (fileTypesWithCounts.length === 0) {
+		fileTypesBar.classList.add("hidden");
+		return;
+	}
+
+	fileTypesBar.classList.remove("hidden");
+	fileTypesTabs.innerHTML = "";
+
+	// Count total files for "All" tab
+	const totalFiles = fileTypesWithCounts.reduce(
+		(sum, item) => sum + item.count,
+		0,
+	);
+
+	// Add "All" tab
+	const allTabContainer = document.createElement("div");
+	allTabContainer.className = "badge-container z-10";
+	const allTab = document.createElement("div");
+	allTab.dataset.fileType = "null";
+	allTab.className =
+		"sub-tab-item " + (currentFileType === null ? "sub-tab-active" : "");
+	const allTabContent = document.createElement("span");
+	allTabContent.textContent = "All";
+	allTab.appendChild(allTabContent);
+
+	// Create superscript badge
+	const allBadge = document.createElement("span");
+	allBadge.className = "count-badge z-100";
+	allBadge.textContent = totalFiles;
+	allBadge.style.display = totalFiles > 0 ? "flex" : "none";
+	allTab.appendChild(allBadge);
+
+	allTabContainer.appendChild(allTab);
+	fileTypesTabs.appendChild(allTabContainer);
+
+	// Add file type tabs in order
+	for (const { type, count } of fileTypesWithCounts) {
+		const tabContainer = document.createElement("div");
+		tabContainer.className = "badge-container";
+		const tab = document.createElement("div");
+		tab.dataset.fileType = type;
+		tab.className =
+			"sub-tab-item " +
+			(currentFileType === type ? "sub-tab-active" : "");
+		const typeContent = document.createElement("span");
+		typeContent.textContent = type.toUpperCase();
+		tab.appendChild(typeContent);
+
+		// Create superscript badge
+		const badge = document.createElement("span");
+		badge.className = "count-badge";
+		badge.textContent = count;
+		badge.style.display = count > 0 ? "flex" : "none";
+		tab.appendChild(badge);
+
+		tabContainer.appendChild(tab);
+		fileTypesTabs.appendChild(tabContainer);
+	}
+}
+
 // ─── Render Links ─────────────────────────────────────────────────────────────
 function renderLinks() {
 	updateLinksSubtabCounts();
 	const resultsDiv = document.getElementById("links-view");
 	resultsDiv.innerHTML = "";
 
-	const filtered = allLinksGlobal
+	let filtered = allLinksGlobal
 		.filter(
 			(l) => currentCategory === "All" || l.category === currentCategory,
 		)
@@ -675,6 +942,16 @@ function renderLinks() {
 		)
 		.filter((l) => !showOnlySensitiveLinks || isSensitiveLink(l.fullUrl));
 
+	// Render file type subtabs for Files category
+	renderFileTypeSubtabs(filtered);
+
+	// Filter by selected file type if in Files category
+	if (currentCategory === "Files" && currentFileType !== null) {
+		filtered = filtered.filter(
+			(l) => getFileExtension(l.fullUrl) === currentFileType,
+		);
+	}
+
 	if (!filtered.length) {
 		resultsDiv.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-500"><div class="text-4xl mb-3">🔍</div><p class="font-semibold">No links found</p><p class="text-xs mt-1">Try adjusting your search or category filters</p></div>`;
 		document.getElementById("searchResults").classList.add("hidden");
@@ -683,6 +960,8 @@ function renderLinks() {
 
 	const grouped = {};
 	const mainBase = cachedDomain.replace("www.", "");
+
+	// Group by domain
 	for (const link of filtered) (grouped[link.domain] ||= []).push(link);
 
 	const sortedDomains = Object.keys(grouped).sort((a, b) => {
@@ -758,13 +1037,7 @@ function renderLinks() {
 	}
 	resultsDiv.appendChild(frag);
 
-	const searchEl = document.getElementById("searchResults");
-	if (currentSearchQuery) {
-		searchEl.textContent = `Found ${filtered.length} link${filtered.length !== 1 ? "s" : ""}`;
-		searchEl.classList.remove("hidden");
-	} else {
-		searchEl.classList.add("hidden");
-	}
+	updateSearchResults("searchResults", filtered.length, currentSearchQuery);
 }
 
 // ─── Render Params ────────────────────────────────────────────────────────────
@@ -977,7 +1250,14 @@ function renderSecrets() {
 
 		typeItems.forEach((item) => {
 			const val = item.pattern || item.value || item.content || "";
-			const displayVal = isCommentType ? val : val.substring(0, 150);
+			const lineCount = countLines(val);
+			const hasMultipleLines = lineCount > 5;
+			const displayVal = hasMultipleLines
+				? truncateToLines(val, 5)
+				: isCommentType
+					? val
+					: val.substring(0, 150);
+
 			const li = document.createElement("li");
 			li.className = "flex items-center justify-between text-sm gap-2";
 			const inner = document.createElement("div");
@@ -988,6 +1268,7 @@ function renderSecrets() {
 			const code = document.createElement("code");
 			code.className =
 				"text-xs bg-gray-900 text-green-400 px-2 py-1 rounded font-mono flex-1 break-all";
+
 			if (isHiddenLinkType) {
 				const a = document.createElement("a");
 				a.href = val;
@@ -999,10 +1280,27 @@ function renderSecrets() {
 			} else {
 				code.textContent =
 					displayVal +
-					(!isCommentType && val.length > 150 ? "..." : "");
+					(!isCommentType && val.length > 150 && !hasMultipleLines
+						? "..."
+						: "") +
+					(hasMultipleLines ? "\n..." : "");
 			}
 			inner.append(bullet, code);
 			li.appendChild(inner);
+
+			// Add "View Full" button if content has more than 5 lines
+			if (hasMultipleLines) {
+				const viewBtn = document.createElement("button");
+				viewBtn.className = "btn btn-blue text-xs px-2 py-1";
+				viewBtn.textContent = "View Full";
+				viewBtn.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					openModal(`${type} - Full Content`, val);
+				});
+				li.appendChild(viewBtn);
+			}
+
 			ul.appendChild(li);
 		});
 
@@ -1387,6 +1685,45 @@ function attachEventListeners() {
 	document
 		.querySelector('[data-toplevel="settings"]')
 		?.addEventListener("click", () => setTimeout(loadPopupSettings, 50));
+
+	// ─── Modal Event Handlers ──────────────────────────────────────────────
+	const modal = document.getElementById("itemModal");
+	const modalOverlay = document.getElementById("modalOverlay");
+	const modalCloseBtn = document.getElementById("modalCloseBtn");
+	const modalCopyBtn = document.getElementById("modalCopyBtn");
+
+	if (modalCloseBtn) {
+		modalCloseBtn.addEventListener("click", closeModal);
+	}
+
+	if (modalOverlay) {
+		modalOverlay.addEventListener("click", closeModal);
+	}
+
+	if (modalCopyBtn) {
+		modalCopyBtn.addEventListener("click", () => {
+			const content = document.getElementById("modalContent").textContent;
+			if (content) {
+				navigator.clipboard
+					.writeText(content)
+					.then(() => {
+						showToast("Copied to clipboard!", "success");
+					})
+					.catch(() => {
+						showToast("Failed to copy", "error");
+					});
+			}
+		});
+	}
+
+	// Close modal on Escape key
+	if (modal) {
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+				closeModal();
+			}
+		});
+	}
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
