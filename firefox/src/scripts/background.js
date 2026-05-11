@@ -257,15 +257,32 @@ const METHOD_MAP = Object.fromEntries(
 
 function createContextMenus() {
 	api.contextMenus.removeAll(() => {
+		// Direct action menu for page context (no selection) - opens full view
+		api.contextMenus.create({
+			id: "power-toys-page",
+			title: "Power Toys",
+			contexts: ["page"],
+		});
+
+		// Main menu shown only when text is selected
 		api.contextMenus.create({
 			id: "power-toys-main",
 			title: "Power Toys",
-			contexts: ["page", "selection", "link", "image"],
+			contexts: ["selection"],
 		});
 
+		// Separate Encode submenu
 		api.contextMenus.create({
-			id: "encode-decode-parent",
-			title: "Encode/Decode",
+			id: "encode-parent",
+			title: "Encode",
+			parentId: "power-toys-main",
+			contexts: ["selection"],
+		});
+
+		// Separate Decode submenu
+		api.contextMenus.create({
+			id: "decode-parent",
+			title: "Decode",
 			parentId: "power-toys-main",
 			contexts: ["selection"],
 		});
@@ -274,7 +291,8 @@ function createContextMenus() {
 			api.contextMenus.create({
 				id: item.id,
 				title: item.title,
-				parentId: "encode-decode-parent",
+				parentId:
+					item.op === "encode" ? "encode-parent" : "decode-parent",
 				contexts: ["selection"],
 			});
 		}
@@ -305,8 +323,12 @@ api.runtime.onInstalled.addListener(() => {
 api.contextMenus.onClicked.addListener(async (info, tab) => {
 	const { menuItemId, selectionText } = info;
 
-	if (menuItemId === "power-toys-main") {
-		// Validate tab URL before parsing
+	// Handle both direct full-view action and main menu
+	if (
+		menuItemId === "power-toys-page" ||
+		(menuItemId === "power-toys-main" && !selectionText)
+	) {
+		// Open full view in new tab
 		let domain = "";
 		try {
 			domain = new URL(tab.url).hostname;
