@@ -15,6 +15,7 @@ let currentSecretsCategory = "all";
 let currentSearchQuery = "";
 let currentSecretsSearchQuery = "";
 let showOnlySensitiveLinks = false;
+let showOnlySensitiveSecrets = false;
 let cachedDomain = "";
 let currentFileType = null; // null means "All" for Files category
 let SENSITIVE_PATTERNS = { params: [], urlPatterns: [] };
@@ -649,6 +650,17 @@ function isSensitiveParam(name) {
 	);
 }
 
+function isSensitiveSecret(item) {
+	const value = item.pattern || item.value || item.content || "";
+	const lower = value.toLowerCase();
+	return (
+		SENSITIVE_PATTERNS.urlPatterns.some((p) => p.test(value)) ||
+		SENSITIVE_PATTERNS.params.some(
+			(p) => lower.includes(p) || p.includes(lower),
+		)
+	);
+}
+
 // ─── Theme ────────────────────────────────────────────────────────────────────
 function initTheme() {
 	const select = document.getElementById("themeSelect");
@@ -740,6 +752,17 @@ document.addEventListener("click", (e) => {
 	};
 	currentSecretsCategory = map[e.target.dataset.subtab] || "all";
 	renderSecrets();
+});
+
+document.getElementById("secretsSubTabBar").addEventListener("click", (e) => {
+	if (e.target.closest("#sensitiveSecretsFilterBtn")) {
+		showOnlySensitiveSecrets = !showOnlySensitiveSecrets;
+		document
+			.getElementById("sensitiveSecretsFilterBtn")
+			.classList.toggle("filter-active", showOnlySensitiveSecrets);
+		renderSecrets();
+		return;
+	}
 });
 
 document.getElementById("searchInput").addEventListener("input", (e) => {
@@ -1229,6 +1252,10 @@ function renderSecrets() {
 				item.content?.toLowerCase().includes(s) ||
 				item.type?.toLowerCase().includes(s),
 		);
+	}
+
+	if (showOnlySensitiveSecrets) {
+		items = items.filter((item) => isSensitiveSecret(item));
 	}
 
 	if (!items.length) {

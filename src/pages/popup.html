@@ -96,7 +96,9 @@
                 <div data-subtab="secrets-urls" class="sub-tab-item">Links</div>
                 <div data-subtab="secrets-comments" class="sub-tab-item">Comments</div>
             </div>
-            <div>
+            <div class="flex items-center gap-2">
+                <button id="sensitiveSecretsFilterBtn" class="tab-bar-btn hover:border-red-700 hover:text-red-500"
+                    title="Show only sensitive secrets">Sensitive</button>
                 <button id="copySecretsBtn"
                     class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xs px-3 py-1"
                     title="Copy Secrets">
@@ -274,7 +276,7 @@
                 <div class="section-description">Power Toys Extension — Essential toolkit for pentesters and bug hunters
                 </div>
                 <div class="about-section">
-                    <p><strong>Version:</strong> 0.4.0</p>
+                    <p><strong>Version:</strong> 0.4.1</p>
                     <p><strong>Author:</strong> ncodevsec</p>
                     <p><strong>GitHub:</strong> <a href="https://github.com/ncodevsec/power-toys" target="_blank"
                             rel="noopener noreferrer"
