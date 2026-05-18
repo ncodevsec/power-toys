@@ -178,7 +178,7 @@ html.dark .cyber-card:hover {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	padding: 0.1rem 0.4rem;
+	padding: 0.2rem 0.4rem;
 	font-size: 0.7rem;
 	font-weight: bold;
 	color: var(--text-main);
@@ -192,6 +192,7 @@ html.dark .cyber-card:hover {
 
 .action-btn:hover {
 	border-color: currentColor;
+	filter: brightness(1.2);
 }
 
 /* Color variants for actions */
@@ -200,39 +201,32 @@ html.dark .cyber-card:hover {
 }
 .action-btn--primary:hover {
 	border-color: #3b82f6;
-	color: #2563eb;
+	filter: brightness(1.2);
 }
 
 .action-btn--success {
 	color: var(--accent-green);
-	border-color: var(--accent-green);
 }
 .action-btn--success:hover {
 	border-color: #10b981;
-	color: #059669;
 }
 
 .action-btn--danger {
 	color: var(--accent-red);
-	border-color: var(--accent-red);
 }
 .action-btn--danger:hover {
 	border-color: #ef4444;
-	color: #dc2626;
 }
 
 .action-btn--warning {
 	color: var(--accent-yellow);
-	border-color: var(--accent-yellow);
 }
 .action-btn--warning:hover {
 	border-color: #fbbf24;
-	color: #f59e0b;
 }
 
 .action-btn--secondary {
 	color: var(--text-muted);
-	border-color: var(--text-muted);
 }
 .action-btn--secondary:hover {
 	border-color: var(--text-muted);
@@ -247,8 +241,7 @@ html.dark .cyber-card:hover {
 }
 
 .action-btn.filter-active:hover {
-	background-color: #dc2626;
-	border-color: #dc2626;
+	background-color: var(--accent-red);
 }
 
 select.cyber-input {

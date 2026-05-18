@@ -1559,8 +1559,21 @@ document.addEventListener("click", async (event) => {
 
 	const action = actionBtn.getAttribute("data-action");
 
+	// Cipher paste input
+	if (action === "paste-input") {
+		try {
+			const text = await navigator.clipboard.readText();
+			encodeInput.value = text;
+			showToast("Pasted successfully", "success");
+		} catch (err) {
+			showToast(
+				"Paste failed. Please check extension permissions or use Ctrl+V manually",
+				"error",
+			);
+		}
+	}
 	// Copy actions
-	if (action === "copy-result") {
+	else if (action === "copy-result") {
 		if (!encodeOutput.value) {
 			showToast("No output to copy", "error");
 			return;
