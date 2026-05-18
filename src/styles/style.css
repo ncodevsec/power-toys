@@ -174,7 +174,7 @@ html.dark .cyber-card:hover {
 }
 
 /* ─── Action Button Utilities (Professional Color Modifiers) ─── */
-.action-btn {
+.btn {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -190,57 +190,57 @@ html.dark .cyber-card:hover {
 	white-space: nowrap;
 }
 
-.action-btn:hover {
+.btn:hover {
 	border-color: currentColor;
 	filter: brightness(1.2);
 }
 
 /* Color variants for actions */
-.action-btn--primary {
+.btn-primary {
 	color: var(--accent-blue);
 }
-.action-btn--primary:hover {
+.btn-primary:hover {
 	border-color: #3b82f6;
 	filter: brightness(1.2);
 }
 
-.action-btn--success {
+.btn-success {
 	color: var(--accent-green);
 }
-.action-btn--success:hover {
+.btn-success:hover {
 	border-color: #10b981;
 }
 
-.action-btn--danger {
+.btn-danger {
 	color: var(--accent-red);
 }
-.action-btn--danger:hover {
+.btn-danger:hover {
 	border-color: #ef4444;
 }
 
-.action-btn--warning {
+.btn-warning {
 	color: var(--accent-yellow);
 }
-.action-btn--warning:hover {
+.btn-warning:hover {
 	border-color: #fbbf24;
 }
 
-.action-btn--secondary {
+.btn-secondary {
 	color: var(--text-muted);
 }
-.action-btn--secondary:hover {
+.btn-secondary:hover {
 	border-color: var(--text-muted);
 	color: var(--text-main);
 }
 
 /* Active filter state for sensitive buttons */
-.action-btn.filter-active {
+.btn.filter-active {
 	color: white;
 	background-color: var(--accent-red);
 	border-color: var(--accent-red);
 }
 
-.action-btn.filter-active:hover {
+.btn.filter-active:hover {
 	background-color: var(--accent-red);
 }
 
@@ -537,7 +537,7 @@ html.dark .badge-count {
 /* Font rendering smoothing */
 .main-title,
 .cyber-input,
-.action-btn {
+.btn {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
@@ -546,7 +546,7 @@ html.dark .badge-count {
 body,
 .main-title,
 .cyber-input,
-.action-btn {
+.btn {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
@@ -1127,8 +1127,8 @@ html.dark .info-box-settings {
 	border-radius: 0 0 12px 12px;
 }
 
-/* Modal buttons use action-btn system */
-.modal-footer .action-btn {
+/* Modal buttons use btn system */
+.modal-footer .btn {
 	padding: 0.5rem 1rem;
 	font-size: 0.875rem;
 }

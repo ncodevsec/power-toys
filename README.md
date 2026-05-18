@@ -1,6 +1,6 @@
 <div align="center">
 
-![Power Toys Logo](chrome/assets/images/power-toys-128.png)
+![Power Toys Logo](src/assets/images/power-toys-128.png)
 
 # Power Toys
 

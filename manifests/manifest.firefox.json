@@ -6,7 +6,7 @@
 	"permissions": ["activeTab", "scripting", "storage", "contextMenus"],
 	"host_permissions": ["<all_urls>"],
 	"background": {
-		"scripts": ["src/scripts/api-compat.js", "src/scripts/background.js"]
+		"scripts": ["src/utils/api-compat.js", "src/scripts/background.js"]
 	},
 	"icons": {
 		"16": "assets/images/power-toys-16.png",
