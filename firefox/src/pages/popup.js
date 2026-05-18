@@ -22,6 +22,7 @@ let currentSearchQuery = "";
 let currentSecretsSearchQuery = "";
 let showOnlySensitiveLinks = false;
 let showOnlySensitiveSecrets = false;
+let showOnlySensitiveParams = false;
 let cachedDomain = "";
 let currentFileType = null; // null means "All" for Files category
 let SENSITIVE_PATTERNS = { params: [], urlPatterns: [] };
@@ -670,18 +671,6 @@ function isSensitiveLink(url) {
 			searchParams.has(p),
 		);
 		const result = urlPatternMatch || paramMatch;
-		if (showOnlySensitiveLinks) {
-			console.log(
-				"isSensitiveLink check:",
-				url,
-				"urlPattern:",
-				urlPatternMatch,
-				"param:",
-				paramMatch,
-				"result:",
-				result,
-			);
-		}
 		return result;
 	} catch {
 		return false;
@@ -702,12 +691,6 @@ function isSensitiveSecret(item) {
 		SENSITIVE_PATTERNS.urlPatterns.some((p) => p.test(value)) ||
 		SENSITIVE_PATTERNS.params.some(
 			(p) => lower.includes(p) || p.includes(lower),
-		);
-	if (result)
-		console.log(
-			"Sensitive secret found:",
-			item.type,
-			value.substring(0, 30),
 		);
 	return result;
 }
@@ -1019,15 +1002,6 @@ function renderLinks() {
 		)
 		.filter((l) => !showOnlySensitiveLinks || isSensitiveLink(l.fullUrl));
 
-	console.log(
-		"renderLinks - showOnlySensitiveLinks:",
-		showOnlySensitiveLinks,
-		"filtered count:",
-		filtered.length,
-		"filtered items:",
-		filtered.slice(0, 3),
-	);
-
 	// Render file type subtabs for Files category
 	renderFileTypeSubtabs(filtered);
 
@@ -1160,7 +1134,7 @@ function renderParams() {
 		.filter(([, p]) => Object.keys(p).length > 0)
 		.sort((a, b) => a[0].localeCompare(b[0]));
 
-	if (currentSearchQuery || showOnlySensitiveLinks) {
+	if (currentSearchQuery || showOnlySensitiveParams) {
 		domains = domains
 			.map(([domain, params]) => {
 				const filtered = Object.fromEntries(
@@ -1174,7 +1148,7 @@ function renderParams() {
 							domain.toLowerCase().includes(currentSearchQuery);
 						return (
 							matchSearch &&
-							(!showOnlySensitiveLinks || isSensitiveParam(name))
+							(!showOnlySensitiveParams || isSensitiveParam(name))
 						);
 					}),
 				);
@@ -1737,60 +1711,17 @@ document.addEventListener("click", async (event) => {
 	}
 	// Filter actions
 	else if (action === "filter-sensitive-links") {
-		console.log("Filter button clicked:", actionBtn, actionBtn.id);
 		showOnlySensitiveLinks = !showOnlySensitiveLinks;
 		actionBtn.classList.toggle("filter-active", showOnlySensitiveLinks);
-		console.log(
-			"Filter-active class:",
-			actionBtn.className,
-			"showOnlySensitiveLinks:",
-			showOnlySensitiveLinks,
-		);
-		console.log(
-			"Links Filter toggled:",
-			showOnlySensitiveLinks,
-			"Total links:",
-			allLinksGlobal.length,
-		);
-		const sensitivLinks = allLinksGlobal.filter((l) =>
-			isSensitiveLink(l.fullUrl),
-		);
-		console.log(
-			"Sensitive links found:",
-			sensitivLinks.length,
-			sensitivLinks.slice(0, 5),
-		);
 		renderLinks();
 	} else if (action === "filter-sensitive-secrets") {
-		console.log("Filter button clicked:", actionBtn, actionBtn.id);
 		showOnlySensitiveSecrets = !showOnlySensitiveSecrets;
 		actionBtn.classList.toggle("filter-active", showOnlySensitiveSecrets);
-		console.log(
-			"Filter-active class:",
-			actionBtn.className,
-			"showOnlySensitiveSecrets:",
-			showOnlySensitiveSecrets,
-		);
-		console.log(
-			"Secrets Filter toggled:",
-			showOnlySensitiveSecrets,
-			"Total secrets:",
-			Object.values(allSecretsGlobal).reduce(
-				(sum, arr) => sum + arr.length,
-				0,
-			),
-		);
-		const allItems = [];
-		Object.values(allSecretsGlobal).forEach((arr) => allItems.push(...arr));
-		const sensitiveItems = allItems.filter((item) =>
-			isSensitiveSecret(item),
-		);
-		console.log(
-			"Sensitive secrets found:",
-			sensitiveItems.length,
-			sensitiveItems.slice(0, 5),
-		);
 		renderSecrets();
+	} else if (action === "filter-sensitive-params") {
+		showOnlySensitiveParams = !showOnlySensitiveParams;
+		actionBtn.classList.toggle("filter-active", showOnlySensitiveParams);
+		renderParams();
 	}
 	// Bulk Opener actions
 	else if (action === "bulk-paste") {

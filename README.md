@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://chrome.google.com)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.0-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.5.1-informational)](package.json)
 
 ---
 
