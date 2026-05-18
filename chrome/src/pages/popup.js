@@ -657,10 +657,26 @@ function isSensitiveLink(url) {
 	try {
 		const { pathname, search, searchParams } = new URL(url);
 		const path = pathname + search;
-		return (
-			SENSITIVE_PATTERNS.urlPatterns.some((p) => p.test(path)) ||
-			SENSITIVE_PATTERNS.params.some((p) => searchParams.has(p))
+		const urlPatternMatch = SENSITIVE_PATTERNS.urlPatterns.some((p) =>
+			p.test(path),
 		);
+		const paramMatch = SENSITIVE_PATTERNS.params.some((p) =>
+			searchParams.has(p),
+		);
+		const result = urlPatternMatch || paramMatch;
+		if (showOnlySensitiveLinks) {
+			console.log(
+				"isSensitiveLink check:",
+				url,
+				"urlPattern:",
+				urlPatternMatch,
+				"param:",
+				paramMatch,
+				"result:",
+				result,
+			);
+		}
+		return result;
 	} catch {
 		return false;
 	}
@@ -676,12 +692,18 @@ function isSensitiveParam(name) {
 function isSensitiveSecret(item) {
 	const value = item.pattern || item.value || item.content || "";
 	const lower = value.toLowerCase();
-	return (
+	const result =
 		SENSITIVE_PATTERNS.urlPatterns.some((p) => p.test(value)) ||
 		SENSITIVE_PATTERNS.params.some(
 			(p) => lower.includes(p) || p.includes(lower),
-		)
-	);
+		);
+	if (result)
+		console.log(
+			"Sensitive secret found:",
+			item.type,
+			value.substring(0, 30),
+		);
+	return result;
 }
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -733,14 +755,6 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("linksSubTabBar").addEventListener("click", (e) => {
-	if (e.target.closest("#sensitiveLinkFilterBtn")) {
-		showOnlySensitiveLinks = !showOnlySensitiveLinks;
-		document
-			.getElementById("sensitiveLinkFilterBtn")
-			.classList.toggle("filter-active", showOnlySensitiveLinks);
-		renderLinks();
-		return;
-	}
 	const subTab = e.target.dataset.subtab;
 	if (!subTab) return;
 	document
@@ -778,14 +792,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("secretsSubTabBar").addEventListener("click", (e) => {
-	if (e.target.closest("#sensitiveSecretsFilterBtn")) {
-		showOnlySensitiveSecrets = !showOnlySensitiveSecrets;
-		document
-			.getElementById("sensitiveSecretsFilterBtn")
-			.classList.toggle("filter-active", showOnlySensitiveSecrets);
-		renderSecrets();
-		return;
-	}
+	// Subtab click handling
 });
 
 document.getElementById("searchInput").addEventListener("input", (e) => {
@@ -1006,6 +1013,15 @@ function renderLinks() {
 		)
 		.filter((l) => !showOnlySensitiveLinks || isSensitiveLink(l.fullUrl));
 
+	console.log(
+		"renderLinks - showOnlySensitiveLinks:",
+		showOnlySensitiveLinks,
+		"filtered count:",
+		filtered.length,
+		"filtered items:",
+		filtered.slice(0, 3),
+	);
+
 	// Render file type subtabs for Files category
 	renderFileTypeSubtabs(filtered);
 
@@ -1065,10 +1081,23 @@ function renderLinks() {
 		domainTitle.style.maxWidth = "250px";
 		domainTitle.textContent = domain;
 		titleWrap.append(favicon, domainTitle);
+		const badgeContainer = document.createElement("div");
+		badgeContainer.className = "flex items-center gap-2";
 		const badge = document.createElement("span");
 		badge.className = "badge-count";
 		badge.textContent = `${links.length} Links`;
-		headerBox.append(titleWrap, badge);
+		const copyGroupBtn = document.createElement("button");
+		copyGroupBtn.type = "button";
+		copyGroupBtn.className = "btn btn-blue text-xs px-2 py-1";
+		copyGroupBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;margin-right:0.3rem"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`;
+		copyGroupBtn.addEventListener("click", () => {
+			navigator.clipboard.writeText(
+				links.map((l) => l.fullUrl).join("\n"),
+			);
+			flashCopied(copyGroupBtn, copyGroupBtn.innerHTML);
+		});
+		badgeContainer.append(badge, copyGroupBtn);
+		headerBox.append(titleWrap, badgeContainer);
 
 		const ul = document.createElement("ul");
 		ul.className = "space-y-2 ml-2";
@@ -1176,10 +1205,27 @@ function renderParams() {
 		domainTitle.style.maxWidth = "250px";
 		domainTitle.textContent = domain;
 		titleWrap.append(favicon, domainTitle);
+		const badgeContainer = document.createElement("div");
+		badgeContainer.className = "flex items-center gap-2";
 		const bdg = document.createElement("span");
 		bdg.className = "badge-count";
 		bdg.textContent = `${entries.length} Params`;
-		headerBox.append(titleWrap, bdg);
+		const copyGroupBtn = document.createElement("button");
+		copyGroupBtn.type = "button";
+		copyGroupBtn.className = "btn btn-blue text-xs px-2 py-1";
+		copyGroupBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;margin-right:0.3rem"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`;
+		copyGroupBtn.addEventListener("click", () => {
+			const paramLines = [];
+			for (const [name, data] of entries) {
+				for (const value of data.values) {
+					paramLines.push(`${name}=${value}`);
+				}
+			}
+			navigator.clipboard.writeText(paramLines.join("\n"));
+			flashCopied(copyGroupBtn, copyGroupBtn.innerHTML);
+		});
+		badgeContainer.append(bdg, copyGroupBtn);
+		headerBox.append(titleWrap, badgeContainer);
 
 		const ul = document.createElement("ul");
 		ul.className = "space-y-3 ml-2";
@@ -1324,10 +1370,32 @@ function renderSecrets() {
 		const h2 = document.createElement("h2");
 		h2.className = "text-sm font-bold";
 		h2.textContent = type;
+		const badgeContainer = document.createElement("div");
+		badgeContainer.className = "flex items-center gap-2";
 		const bdg = document.createElement("span");
 		bdg.className = "badge-count";
 		bdg.textContent = typeItems.length;
-		headerBox.append(h2, bdg);
+		const copyGroupBtn = document.createElement("button");
+		copyGroupBtn.type = "button";
+		copyGroupBtn.className = "btn btn-blue text-xs px-2 py-1";
+		copyGroupBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;margin-right:0.3rem"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`;
+		copyGroupBtn.addEventListener("click", () => {
+			const toCopy = typeItems
+				.map((item) => {
+					if (
+						item.type === "HTML Comment" ||
+						item.type === "JavaScript Comment" ||
+						item.type === "CSS Comment"
+					)
+						return item.content || item.sourceText || "";
+					return item.value || item.pattern || "";
+				})
+				.filter((v) => v.trim());
+			navigator.clipboard.writeText(toCopy.join("\n"));
+			flashCopied(copyGroupBtn, copyGroupBtn.innerHTML);
+		});
+		badgeContainer.append(bdg, copyGroupBtn);
+		headerBox.append(h2, badgeContainer);
 
 		const ul = document.createElement("ul");
 		ul.className = "space-y-1 ml-2";
@@ -1490,39 +1558,66 @@ function flashCopied(btn, origHtml) {
 	}, 1500);
 }
 
-document.getElementById("copyResultBtn").addEventListener("click", function () {
-	if (!encodeOutput.value) {
-		showToast("No output to copy", "error");
-		return;
-	}
-	navigator.clipboard.writeText(encodeOutput.value);
-	flashCopied(this, this.innerHTML);
+// Delegated to main event handler
+// Delegated to main event handler
+// Delegated to unified event delegation system
+
+document.getElementById("openTabBtn").addEventListener("click", async () => {
+	const [tab] = await chrome.tabs.query({
+		active: true,
+		currentWindow: true,
+	});
+	try {
+		const domain = new URL(tab.url).hostname;
+		chrome.tabs.create({
+			url: chrome.runtime.getURL(
+				`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
+			),
+		});
+	} catch {}
 });
 
-document.getElementById("copyLinksBtn").addEventListener("click", function () {
-	const filtered = allLinksGlobal
-		.filter(
-			(l) => currentCategory === "All" || l.category === currentCategory,
-		)
-		.filter(
-			(l) =>
-				!currentSearchQuery ||
-				l.fullUrl.toLowerCase().includes(currentSearchQuery) ||
-				l.domain.toLowerCase().includes(currentSearchQuery) ||
-				l.path.toLowerCase().includes(currentSearchQuery),
-		)
-		.filter((l) => !showOnlySensitiveLinks || isSensitiveLink(l.fullUrl));
-	if (!filtered.length) {
-		showToast("No links to copy", "error");
-		return;
-	}
-	navigator.clipboard.writeText(filtered.map((l) => l.fullUrl).join("\n"));
-	flashCopied(this, this.innerHTML);
-});
+// ─── Unified Event Delegation System for Action Buttons ────────────────────────
+// This consolidates all action button handlers using data-action attributes
+document.addEventListener("click", async (event) => {
+	const actionBtn = event.target.closest("[data-action]");
+	if (!actionBtn) return;
 
-document
-	.getElementById("copySecretsBtn")
-	.addEventListener("click", function () {
+	const action = actionBtn.getAttribute("data-action");
+
+	// Copy actions
+	if (action === "copy-result") {
+		if (!encodeOutput.value) {
+			showToast("No output to copy", "error");
+			return;
+		}
+		navigator.clipboard.writeText(encodeOutput.value);
+		flashCopied(actionBtn, actionBtn.innerHTML);
+	} else if (action === "copy-links") {
+		const filtered = allLinksGlobal
+			.filter(
+				(l) =>
+					currentCategory === "All" || l.category === currentCategory,
+			)
+			.filter(
+				(l) =>
+					!currentSearchQuery ||
+					l.fullUrl.toLowerCase().includes(currentSearchQuery) ||
+					l.domain.toLowerCase().includes(currentSearchQuery) ||
+					l.path.toLowerCase().includes(currentSearchQuery),
+			)
+			.filter(
+				(l) => !showOnlySensitiveLinks || isSensitiveLink(l.fullUrl),
+			);
+		if (!filtered.length) {
+			showToast("No links to copy", "error");
+			return;
+		}
+		navigator.clipboard.writeText(
+			filtered.map((l) => l.fullUrl).join("\n"),
+		);
+		flashCopied(actionBtn, actionBtn.innerHTML);
+	} else if (action === "copy-secrets") {
 		const categoryKey =
 			currentSecretsCategory === "all" ? null : currentSecretsCategory;
 		let items = [];
@@ -1572,96 +1667,264 @@ document
 			})
 			.filter((v) => v.trim());
 		navigator.clipboard.writeText(toCopy.join("\n"));
-		flashCopied(this, this.innerHTML);
-	});
-
-// Toggle params copy menu
-document
-	.getElementById("copyParamsBtn")
-	.addEventListener("click", function (e) {
+		flashCopied(actionBtn, actionBtn.innerHTML);
+	}
+	// Params copy menu toggle
+	else if (action === "copy-params-menu") {
 		const menu = document.getElementById("copyParamsMenu");
-		console.log("Style : " + menu.style.display);
-		// menu.style.display = "flex";
 		menu.style.display = menu.style.display === "none" ? "flex" : "none";
-		e.stopPropagation();
-	});
-
-// Copy params with selected option
-document.querySelectorAll(".copy-menu-item").forEach((btn) => {
-	btn.addEventListener("click", function () {
-		const copyType = this.getAttribute("data-copy-type");
+		event.stopPropagation();
+	}
+	// Params copy with copy type selection
+	else if (action === "copy-params") {
+		const copyType = actionBtn.getAttribute("data-copy-type");
 		const allParams = {};
 		for (const link of allLinksGlobal) {
 			try {
 				const { hostname: domain, searchParams } = new URL(
 					link.fullUrl,
 				);
-				const dp = (allParams[domain] ||= {});
-				searchParams.forEach((value, key) => {
-					(dp[key] ||= { values: new Set() }).values.add(value);
-				});
+				if (!allParams[domain]) allParams[domain] = {};
+				for (const [key, val] of searchParams) {
+					if (!allParams[domain][key]) allParams[domain][key] = [];
+					if (!allParams[domain][key].includes(val))
+						allParams[domain][key].push(val);
+				}
 			} catch {}
 		}
 
-		let paramsList = [];
-		for (const [domain, params] of Object.entries(allParams)) {
-			for (const [key, data] of Object.entries(params)) {
-				for (const value of data.values) {
-					if (copyType === "both") {
-						paramsList.push(`${key}=${value}`);
-					} else if (copyType === "names") {
-						paramsList.push(key);
-					} else if (copyType === "values") {
-						paramsList.push(value);
-					}
+		let result = [];
+		if (copyType === "names") {
+			const uniqueKeys = new Set();
+			for (const domain in allParams) {
+				Object.keys(allParams[domain]).forEach((k) =>
+					uniqueKeys.add(k),
+				);
+			}
+			result = Array.from(uniqueKeys);
+		} else if (copyType === "values") {
+			for (const domain in allParams) {
+				for (const param in allParams[domain]) {
+					result.push(
+						...allParams[domain][param].filter(
+							(v) => !result.includes(v),
+						),
+					);
+				}
+			}
+		} else {
+			for (const domain in allParams) {
+				for (const param in allParams[domain]) {
+					allParams[domain][param].forEach((val) => {
+						const line = `${param}=${val}`;
+						if (!result.includes(line)) result.push(line);
+					});
 				}
 			}
 		}
 
-		// Remove duplicates
-		paramsList = [...new Set(paramsList)];
-
-		if (currentSearchQuery) {
-			const st = currentSearchQuery.toLowerCase();
-			paramsList = paramsList.filter((p) => p.toLowerCase().includes(st));
-		}
-		if (!paramsList.length) {
+		if (!result.length) {
 			showToast("No params to copy", "error");
 			return;
 		}
-		navigator.clipboard.writeText(paramsList.join("\n"));
-		flashCopied(
-			document.getElementById("copyParamsBtn"),
-			document.getElementById("copyParamsBtn").innerHTML,
-		);
+		navigator.clipboard.writeText(result.join("\n"));
+		flashCopied(actionBtn, actionBtn.innerHTML);
 		document.getElementById("copyParamsMenu").style.display = "none";
-	});
-});
+	}
+	// Filter actions
+	else if (action === "filter-sensitive-links") {
+		console.log("Filter button clicked:", actionBtn, actionBtn.id);
+		showOnlySensitiveLinks = !showOnlySensitiveLinks;
+		actionBtn.classList.toggle("filter-active", showOnlySensitiveLinks);
+		console.log(
+			"Filter-active class:",
+			actionBtn.className,
+			"showOnlySensitiveLinks:",
+			showOnlySensitiveLinks,
+		);
+		console.log(
+			"Links Filter toggled:",
+			showOnlySensitiveLinks,
+			"Total links:",
+			allLinksGlobal.length,
+		);
+		const sensitivLinks = allLinksGlobal.filter((l) =>
+			isSensitiveLink(l.fullUrl),
+		);
+		console.log(
+			"Sensitive links found:",
+			sensitivLinks.length,
+			sensitivLinks.slice(0, 5),
+		);
+		renderLinks();
+	} else if (action === "filter-sensitive-secrets") {
+		console.log("Filter button clicked:", actionBtn, actionBtn.id);
+		showOnlySensitiveSecrets = !showOnlySensitiveSecrets;
+		actionBtn.classList.toggle("filter-active", showOnlySensitiveSecrets);
+		console.log(
+			"Filter-active class:",
+			actionBtn.className,
+			"showOnlySensitiveSecrets:",
+			showOnlySensitiveSecrets,
+		);
+		console.log(
+			"Secrets Filter toggled:",
+			showOnlySensitiveSecrets,
+			"Total secrets:",
+			Object.values(allSecretsGlobal).reduce(
+				(sum, arr) => sum + arr.length,
+				0,
+			),
+		);
+		const allItems = [];
+		Object.values(allSecretsGlobal).forEach((arr) => allItems.push(...arr));
+		const sensitiveItems = allItems.filter((item) =>
+			isSensitiveSecret(item),
+		);
+		console.log(
+			"Sensitive secrets found:",
+			sensitiveItems.length,
+			sensitiveItems.slice(0, 5),
+		);
+		renderSecrets();
+	}
+	// Bulk Opener actions
+	else if (action === "bulk-paste") {
+		try {
+			const text = await navigator.clipboard.readText();
+			document.getElementById("bulkUrlInput").value = text;
+			showToast("URLs pasted successfully", "success");
+		} catch (err) {
+			showToast(
+				"Paste failed. Please check extension permissions in chrome://extensions or use Ctrl+V manually",
+				"error",
+			);
+		}
+	} else if (action === "bulk-copy") {
+		const textarea = document.getElementById("bulkUrlInput");
+		const text = textarea.value.trim();
+		if (!text) {
+			showToast("Input is empty", "error");
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(text);
+			showToast("URLs copied to clipboard", "success");
+		} catch {
+			showToast("Failed to copy to clipboard", "error");
+		}
+	} else if (action === "bulk-clear") {
+		document.getElementById("bulkUrlInput").value = "";
+		document.getElementById("bulkOpenerResults").classList.add("hidden");
+		showToast("Input cleared", "info");
+	} else if (action === "bulk-open") {
+		const textarea = document.getElementById("bulkUrlInput");
+		const mode = document.querySelector(
+			'input[name="bulkOpenerMode"]:checked',
+		)?.value;
+		const text = textarea.value.trim();
 
-// Close menu when clicking outside
-document.addEventListener("click", function (e) {
-	const menu = document.getElementById("copyParamsMenu");
-	if (
-		!e.target.closest("#copyParamsBtn") &&
-		!e.target.closest("#copyParamsMenu")
-	) {
-		menu.style.display = "none";
+		if (!mode) {
+			showToast("Please select an opening option", "error");
+			return;
+		}
+
+		if (!text) {
+			showToast("Please enter at least one URL", "error");
+			return;
+		}
+
+		const urls = extractUrls(text);
+		if (urls.length === 0) {
+			showToast("No valid URLs found", "error");
+			return;
+		}
+
+		if (mode === "newTabs") {
+			chrome.runtime.sendMessage(
+				{ action: "openUrlsInNewTabs", urls: urls },
+				() => {
+					showToast(
+						`Opening ${urls.length} URL(s) in new tabs...`,
+						"success",
+					);
+					updateBulkOpenerResults(urls.length, urls.length);
+				},
+			);
+		} else if (mode === "newWindow") {
+			chrome.runtime.sendMessage(
+				{ action: "openUrlsInNewWindow", urls: urls },
+				() => {
+					showToast(
+						`Opening ${urls.length} URL(s) in a new window...`,
+						"success",
+					);
+					updateBulkOpenerResults(urls.length, 1);
+				},
+			);
+		} else if (mode === "eachDomain") {
+			const domainMap = getUniqueDomains(urls);
+			chrome.runtime.sendMessage(
+				{
+					action: "openUrlsByDomain",
+					domainMap: Array.from(domainMap),
+				},
+				() => {
+					showToast(
+						`Opening ${domainMap.size} domain(s) in separate window(s)...`,
+						"success",
+					);
+					updateBulkOpenerResults(urls.length, domainMap.size);
+				},
+			);
+		}
+	}
+	// Settings actions
+	else if (action === "settings-save") {
+		savePopupSettings();
+	} else if (action === "settings-reset") {
+		resetPopupToDefaults();
+	} else if (action === "export-settings") {
+		exportPopupSettings();
+	} else if (action === "import-settings") {
+		importPopupSettings();
+	}
+	// Modal actions
+	else if (action === "modal-copy") {
+		const content = document.getElementById("modalContent").textContent;
+		if (content) {
+			navigator.clipboard
+				.writeText(content)
+				.then(() => {
+					showToast("Copied to clipboard!", "success");
+				})
+				.catch(() => {
+					showToast("Failed to copy", "error");
+				});
+		}
+	}
+	// Tab actions
+	else if (action === "open-tab") {
+		const [tab] = await chrome.tabs.query({
+			active: true,
+			currentWindow: true,
+		});
+		try {
+			const domain = new URL(tab.url).hostname;
+			chrome.tabs.create({
+				url: chrome.runtime.getURL(
+					`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
+				),
+			});
+		} catch {}
 	}
 });
 
-document.getElementById("openTabBtn").addEventListener("click", async () => {
-	const [tab] = await chrome.tabs.query({
-		active: true,
-		currentWindow: true,
-	});
-	try {
-		const domain = new URL(tab.url).hostname;
-		chrome.tabs.create({
-			url: chrome.runtime.getURL(
-				`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
-			),
-		});
-	} catch {}
+// Close params menu when clicking outside
+document.addEventListener("click", function (e) {
+	if (!e.target.closest("[data-action='copy-params-menu']")) {
+		document.getElementById("copyParamsMenu").style.display = "none";
+	}
 });
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -1813,21 +2076,7 @@ function attachEventListeners() {
 		modalOverlay.addEventListener("click", closeModal);
 	}
 
-	if (modalCopyBtn) {
-		modalCopyBtn.addEventListener("click", () => {
-			const content = document.getElementById("modalContent").textContent;
-			if (content) {
-				navigator.clipboard
-					.writeText(content)
-					.then(() => {
-						showToast("Copied to clipboard!", "success");
-					})
-					.catch(() => {
-						showToast("Failed to copy", "error");
-					});
-			}
-		});
-	}
+	// Delegated to unified event delegation system
 
 	// Close modal on Escape key
 	if (modal) {
@@ -1837,6 +2086,54 @@ function attachEventListeners() {
 			}
 		});
 	}
+}
+
+// ─── Bulk URL Opener functionality ───────────────────────────────────────────
+function extractUrls(text) {
+	const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]*)/g;
+	const urls = [];
+	let match;
+	while ((match = urlRegex.exec(text)) !== null) {
+		const url = match[1].trim();
+		if (url && !urls.includes(url)) {
+			urls.push(url);
+		}
+	}
+	return urls;
+}
+
+function getDomain(url) {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return null;
+	}
+}
+
+function getUniqueDomains(urls) {
+	const domains = new Map();
+	urls.forEach((url) => {
+		const domain = getDomain(url);
+		if (domain) {
+			if (!domains.has(domain)) {
+				domains.set(domain, []);
+			}
+			domains.get(domain).push(url);
+		}
+	});
+	return domains;
+}
+
+// Delegated to unified event delegation system
+
+function updateBulkOpenerResults(totalUrls, windows) {
+	const resultsDiv = document.getElementById("bulkOpenerResults");
+	const resultsText = document.getElementById("bulkOpenerResultsText");
+	resultsText.textContent = `📊 Processed ${totalUrls} URL(s) across ${windows} window(s).`;
+	resultsDiv.classList.remove("hidden");
+	setTimeout(() => {
+		resultsDiv.classList.add("hidden");
+	}, 4000);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

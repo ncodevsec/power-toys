@@ -19,7 +19,8 @@
                 <option value="dark">Night</option>
             </select>
 
-            <button id="openTabBtn" class="cyber-btn btn-blue px-3" title="Open in full tab">
+            <button id="openTabBtn" class="action-btn action-btn--primary" title="Open in full tab"
+                data-action="open-tab">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -36,6 +37,7 @@
         <div data-toplevel="links" class="top-level-tab tab-active">Links</div>
         <div data-toplevel="params" class="top-level-tab">Params</div>
         <div data-toplevel="secrets" class="top-level-tab">Secrets</div>
+        <div data-toplevel="bulk-opener" class="top-level-tab">Bulk Opener</div>
         <div data-toplevel="cipher" class="top-level-tab">Cipher</div>
         <div data-toplevel="settings" class="top-level-tab">Settings</div>
     </div>
@@ -50,11 +52,10 @@
                 <div data-subtab="links-others" class="sub-tab-item">Others</div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="sensitiveLinkFilterBtn" class="tab-bar-btn hover:border-red-700 hover:text-red-500"
-                    title="Show only sensitive links/params">Sensitive</button>
-                <button id="copyLinksBtn"
-                    class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xs px-3 py-1"
-                    title="Copy Links">
+                <button id="sensitiveLinkFilterBtn" class="action-btn action-btn--danger"
+                    title="Show only sensitive links/params" data-action="filter-sensitive-links">Sensitive</button>
+                <button id="copyLinksBtn" class="action-btn action-btn--success text-xs px-3 py-1" title="Copy Links"
+                    data-action="copy-links">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">
@@ -95,11 +96,10 @@
                 <div data-subtab="secrets-comments" class="sub-tab-item">Comments</div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="sensitiveSecretsFilterBtn" class="tab-bar-btn hover:border-red-700 hover:text-red-500"
-                    title="Show only sensitive secrets">Sensitive</button>
-                <button id="copySecretsBtn"
-                    class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xs px-3 py-1"
-                    title="Copy Secrets">
+                <button id="sensitiveSecretsFilterBtn" class="action-btn action-btn--danger"
+                    title="Show only sensitive secrets" data-action="filter-sensitive-secrets">Sensitive</button>
+                <button id="copySecretsBtn" class="action-btn action-btn--success text-xs px-3 py-1"
+                    title="Copy Secrets" data-action="copy-secrets">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">
@@ -124,9 +124,8 @@
     <div id="params-section" class="section-content hidden">
         <div id="paramsSubTabBar" class="sub-tab-bar">
             <div>
-                <button id="copyParamsBtn"
-                    class="tab-bar-btn hover:border-green-700 hover:text-green-500 text-xl px-3 py-1"
-                    title="Copy Params - Click for options">
+                <button id="copyParamsBtn" class="action-btn action-btn--primary text-xl px-3 py-1"
+                    title="Copy Params - Click for options" data-action="copy-params-menu">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">
@@ -139,19 +138,16 @@
                     </svg>
                 </button>
                 <div id="copyParamsMenu" class="flex gap-2">
-                    <button
-                        class="copy-menu-item tab-bar-btn hover:border-green-700 hover:text-green-500 text-xl px-3 py-1"
-                        data-copy-type="both">
+                    <button class="copy-menu-item action-btn action-btn--secondary text-xl px-3 py-1"
+                        data-copy-type="both" data-action="copy-params">
                         Names + Values
                     </button>
-                    <button
-                        class="copy-menu-item tab-bar-btn hover:border-green-700 hover:text-green-500 text-xl px-3 py-1"
-                        data-copy-type="names">
+                    <button class="copy-menu-item action-btn action-btn--secondary text-xl px-3 py-1"
+                        data-copy-type="names" data-action="copy-params">
                         Names Only
                     </button>
-                    <button
-                        class="copy-menu-item tab-bar-btn hover:border-green-700 hover:text-green-500 text-xl px-3 py-1"
-                        data-copy-type="values">Values Only </button>
+                    <button class="copy-menu-item action-btn action-btn--secondary text-xl px-3 py-1"
+                        data-copy-type="values" data-action="copy-params">Values Only </button>
                 </div>
             </div>
         </div>
@@ -162,6 +158,56 @@
         <div id="params-view" class="space-y-4">
             <div class="flex justify-center py-10">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BULK OPENER TAB -->
+    <div id="bulk-opener-section" class="section-content hidden">
+        <div class="space-y-4">
+            <!-- URL Input Area -->
+            <div>
+                <label class="block text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">Enter URLs (one per
+                    line)</label>
+                <textarea id="bulkUrlInput" placeholder="Enter URLs here, one per line..."
+                    class="cyber-input resize-none h-32"></textarea>
+            </div>
+
+            <!-- Input Buttons -->
+            <div class="flex gap-2 flex-wrap">
+                <button id="bulkPasteBtn" class="action-btn action-btn--primary" title="Paste from clipboard"
+                    data-action="bulk-paste">Paste</button>
+                <button id="bulkCopyBtn" class="action-btn action-btn--primary" title="Copy URLs from input"
+                    data-action="bulk-copy">Copy</button>
+                <button id="bulkClearBtn" class="action-btn action-btn--danger" title="Clear input"
+                    data-action="bulk-clear">Clear</button>
+            </div>
+
+            <!-- Open Options -->
+            <div class="border-t border-gray-300 dark:border-gray-600 pt-4">
+                <label class="block text-xs font-bold mb-3 text-gray-600 dark:text-gray-400">Opening Options</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-blue-500 transition-colors">
+                        <input type="radio" name="bulkOpenerMode" value="newTabs" class="cursor-pointer w-4 h-4">
+                        <span class="text-sm font-medium">Open All in New Tabs</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-blue-500 transition-colors">
+                        <input type="radio" name="bulkOpenerMode" value="newWindow" class="cursor-pointer w-4 h-4">
+                        <span class="text-sm font-medium">Open All in New Window</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer hover:text-blue-500 transition-colors">
+                        <input type="radio" name="bulkOpenerMode" value="eachDomain" class="cursor-pointer w-4 h-4">
+                        <span class="text-sm font-medium">Open Each Domain in Window</span>
+                    </label>
+                </div>
+                <button id="bulkOpenBtn" class="action-btn action-btn--primary text-xs px-4 py-1 mt-3"
+                    title="Open URLs with selected option" data-action="bulk-open">Open</button>
+            </div>
+
+            <!-- Results Info -->
+            <div id="bulkOpenerResults"
+                class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-gray-100 dark:bg-gray-800 rounded hidden">
+                <p id="bulkOpenerResultsText"></p>
             </div>
         </div>
     </div>
@@ -189,9 +235,10 @@
                 </select>
             </div>
             <div class="flex gap-2 items-center">
-                <button id="encodeBtn" class="btn btn-blue">Encode</button>
-                <button id="decodeBtn" class="btn btn-green">Decode</button>
-                <button id="repeatBtn" class="btn btn-yellow" title="Repeat last operation on output">
+                <button id="encodeBtn" class="action-btn action-btn--primary" data-action="encode">Encode</button>
+                <button id="decodeBtn" class="action-btn action-btn--success" data-action="decode">Decode</button>
+                <button id="repeatBtn" class="action-btn action-btn--warning" title="Repeat last operation on output"
+                    data-action="repeat">
                     <span id="repeatCounter">0</span>
                     <span class="ml-1">Repeat</span>
                 </button>
@@ -201,7 +248,7 @@
                 <textarea id="encodeOutput" placeholder="Result will appear here..."
                     class="cyber-input resize-none h-24" readonly></textarea>
             </div>
-            <button id="copyResultBtn" class="cyber-btn btn-green w-full">
+            <button id="copyResultBtn" class="action-btn action-btn--success w-full" data-action="copy-result">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="icon-inline-lg">
@@ -237,8 +284,10 @@
                 </div>
             </div>
             <div class="settings-button-group">
-                <button class="settings-btn btn-primary-settings settings-save-btn">Save Settings</button>
-                <button class="settings-btn btn-secondary-settings settings-reset-btn">↻ Reset to Defaults</button>
+                <button class="action-btn action-btn--primary settings-save-btn" data-action="settings-save">Save
+                    Settings</button>
+                <button class="action-btn action-btn--secondary settings-reset-btn" data-action="settings-reset">↻ Reset
+                    to Defaults</button>
             </div>
             <div id="statusMessageParams" class="status-message-settings"></div>
         </div>
@@ -260,8 +309,10 @@
                 </div>
             </div>
             <div class="settings-button-group">
-                <button class="settings-btn btn-primary-settings settings-save-btn">Save Settings</button>
-                <button class="settings-btn btn-secondary-settings settings-reset-btn">↻ Reset to Defaults</button>
+                <button class="action-btn action-btn--primary settings-save-btn" data-action="settings-save">Save
+                    Settings</button>
+                <button class="action-btn action-btn--secondary settings-reset-btn" data-action="settings-reset">↻ Reset
+                    to Defaults</button>
             </div>
             <div id="statusMessageUrls" class="status-message-settings"></div>
         </div>
@@ -273,15 +324,17 @@
                 <div class="section-description">Power Toys Extension — Essential toolkit for pentesters and bug hunters
                 </div>
                 <div class="about-section">
-                    <p><strong>Version:</strong> 0.4.3</p>
+                    <p><strong>Version:</strong> 0.5.0</p>
                     <p><strong>Author:</strong> ncodevsec</p>
                     <p><strong>GitHub:</strong> <a href="https://github.com/ncodevsec/power-toys" target="_blank"
                             rel="noopener noreferrer"
                             class="text-blue-500 hover:underline">github.com/ncodevsec/power-toys</a></p>
                 </div>
                 <div class="settings-button-group button-group-spacing">
-                    <button class="settings-btn btn-secondary-settings" id="popupExportBtn">⬇ Export Settings</button>
-                    <button class="settings-btn btn-secondary-settings" id="popupImportBtn">⬆ Import Settings</button>
+                    <button class="action-btn action-btn--secondary" id="popupExportBtn" data-action="export-settings">⬇
+                        Export Settings</button>
+                    <button class="action-btn action-btn--secondary" id="popupImportBtn" data-action="import-settings">⬆
+                        Import Settings</button>
                 </div>
             </div>
         </div>
@@ -317,7 +370,7 @@
                 <pre id="modalContent" class="modal-pre"></pre>
             </div>
             <div class="modal-footer">
-                <button id="modalCopyBtn" class="cyber-btn btn-green">
+                <button id="modalCopyBtn" class="action-btn action-btn--success" data-action="modal-copy">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">

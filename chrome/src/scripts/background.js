@@ -386,6 +386,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	}
 	if (request?.action === "getContextData") {
 		sendResponse(contextMenuData);
+		return false;
 	}
+
+	// Handle bulk URL opener actions
+	if (request?.action === "openUrlsInNewTabs" && request.urls) {
+		request.urls.forEach((url) => {
+			chrome.tabs.create({ url, active: false });
+		});
+		sendResponse({ status: "success" });
+		return false;
+	}
+
+	if (request?.action === "openUrlsInNewWindow" && request.urls) {
+		chrome.windows.create(
+			{ url: request.urls, incognito: false },
+			(window) => {
+				sendResponse({ status: "success", windowId: window.id });
+			},
+		);
+		return true;
+	}
+
+	if (request?.action === "openUrlsByDomain" && request.domainMap) {
+		request.domainMap.forEach(([domain, urls]) => {
+			chrome.windows.create({ url: urls, incognito: false });
+		});
+		sendResponse({ status: "success" });
+		return false;
+	}
+
 	return false;
 });
