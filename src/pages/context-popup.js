@@ -113,7 +113,7 @@ if (urlParams.has("selectedText")) {
 // Initialize with data from background script (non-fullscreen mode)
 window.addEventListener("DOMContentLoaded", () => {
 	if (!urlParams.has("selectedText")) {
-		chrome.runtime.sendMessage({ action: "getContextData" }, (response) => {
+		window.getBrowserAPI().runtime.sendMessage({ action: "getContextData" }, (response) => {
 			if (
 				!response?.selectedText ||
 				!response.method ||
@@ -158,8 +158,8 @@ window.addEventListener("DOMContentLoaded", () => {
 				operation: currentOperation,
 				fullScreen: "true",
 			});
-			chrome.tabs.create({
-				url: chrome.runtime.getURL(
+			window.getBrowserAPI().tabs.create({
+				url: window.getBrowserAPI().runtime.getURL(
 					`src/pages/context-popup.html?${params}`,
 				),
 			});

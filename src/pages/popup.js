@@ -188,7 +188,9 @@ function applyPatterns(patterns) {
 
 async function loadPatterns() {
 	try {
-		const res = await fetch(chrome.runtime.getURL("config/defaults.json"));
+		const res = await fetch(
+			window.getBrowserAPI().runtime.getURL("config/defaults.json"),
+		);
 		const defaults = await res.json();
 		DEFAULT_PATTERNS_RAW = {
 			params: defaults.params || [],
@@ -199,17 +201,21 @@ async function loadPatterns() {
 	} catch {}
 
 	await new Promise((resolve) => {
-		chrome.storage.sync.get(["sensitivePatterns"], (result) => {
-			if (result.sensitivePatterns) {
-				applyPatterns(result.sensitivePatterns);
-				return resolve();
-			}
-			chrome.storage.local.get(["sensitivePatterns"], (local) => {
-				if (local.sensitivePatterns)
-					applyPatterns(local.sensitivePatterns);
-				resolve();
+		window
+			.getBrowserAPI()
+			.storage.sync.get(["sensitivePatterns"], (result) => {
+				if (result.sensitivePatterns) {
+					applyPatterns(result.sensitivePatterns);
+					return resolve();
+				}
+				window
+					.getBrowserAPI()
+					.storage.local.get(["sensitivePatterns"], (local) => {
+						if (local.sensitivePatterns)
+							applyPatterns(local.sensitivePatterns);
+						resolve();
+					});
 			});
-		});
 	});
 }
 
@@ -1766,30 +1772,34 @@ document.addEventListener("click", async (event) => {
 		}
 
 		if (mode === "newTabs") {
-			chrome.runtime.sendMessage(
-				{ action: "openUrlsInNewTabs", urls: urls },
-				() => {
-					showToast(
-						`Opening ${urls.length} URL(s) in new tabs...`,
-						"success",
-					);
-					updateBulkOpenerResults(urls.length, urls.length);
-				},
-			);
+			window
+				.getBrowserAPI()
+				.runtime.sendMessage(
+					{ action: "openUrlsInNewTabs", urls: urls },
+					() => {
+						showToast(
+							`Opening ${urls.length} URL(s) in new tabs...`,
+							"success",
+						);
+						updateBulkOpenerResults(urls.length, urls.length);
+					},
+				);
 		} else if (mode === "newWindow") {
-			chrome.runtime.sendMessage(
-				{ action: "openUrlsInNewWindow", urls: urls },
-				() => {
-					showToast(
-						`Opening ${urls.length} URL(s) in a new window...`,
-						"success",
-					);
-					updateBulkOpenerResults(urls.length, 1);
-				},
-			);
+			window
+				.getBrowserAPI()
+				.runtime.sendMessage(
+					{ action: "openUrlsInNewWindow", urls: urls },
+					() => {
+						showToast(
+							`Opening ${urls.length} URL(s) in a new window...`,
+							"success",
+						);
+						updateBulkOpenerResults(urls.length, 1);
+					},
+				);
 		} else if (mode === "eachDomain") {
 			const domainMap = getUniqueDomains(urls);
-			chrome.runtime.sendMessage(
+			window.getBrowserAPI().runtime.sendMessage(
 				{
 					action: "openUrlsByDomain",
 					domainMap: Array.from(domainMap),
@@ -1830,16 +1840,18 @@ document.addEventListener("click", async (event) => {
 	}
 	// Tab actions
 	else if (action === "open-tab") {
-		const [tab] = await chrome.tabs.query({
+		const [tab] = await window.getBrowserAPI().tabs.query({
 			active: true,
 			currentWindow: true,
 		});
 		try {
 			const domain = new URL(tab.url).hostname;
-			chrome.tabs.create({
-				url: chrome.runtime.getURL(
-					`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
-				),
+			window.getBrowserAPI().tabs.create({
+				url: window
+					.getBrowserAPI()
+					.runtime.getURL(
+						`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
+					),
 			});
 		} catch {}
 	}
@@ -1854,7 +1866,7 @@ document.addEventListener("click", function (e) {
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
 function loadPopupSettings() {
-	chrome.storage.local.get(["sensitivePatterns"], (local) => {
+	window.getBrowserAPI().storage.local.get(["sensitivePatterns"], (local) => {
 		const patterns = local.sensitivePatterns || {
 			params: SENSITIVE_PATTERNS.params,
 			urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
@@ -1891,11 +1903,13 @@ function savePopupSettings() {
 		return;
 	}
 	const patterns = { params, urlPatterns };
-	chrome.storage.sync.set({ sensitivePatterns: patterns });
-	chrome.storage.local.set({ sensitivePatterns: patterns }, () => {
-		showToast("Settings saved!", "success");
-		applyPatterns(patterns);
-	});
+	window.getBrowserAPI().storage.sync.set({ sensitivePatterns: patterns });
+	window
+		.getBrowserAPI()
+		.storage.local.set({ sensitivePatterns: patterns }, () => {
+			showToast("Settings saved!", "success");
+			applyPatterns(patterns);
+		});
 }
 
 function resetPopupToDefaults() {
@@ -1904,35 +1918,39 @@ function resetPopupToDefaults() {
 		params: DEFAULT_PATTERNS_RAW.params,
 		urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
 	};
-	chrome.storage.sync.set({ sensitivePatterns: defaults });
-	chrome.storage.local.set({ sensitivePatterns: defaults }, () => {
-		showToast("Reset to defaults!", "success");
-		applyPatterns(defaults);
-		loadPopupSettings();
-	});
+	window.getBrowserAPI().storage.sync.set({ sensitivePatterns: defaults });
+	window
+		.getBrowserAPI()
+		.storage.local.set({ sensitivePatterns: defaults }, () => {
+			showToast("Reset to defaults!", "success");
+			applyPatterns(defaults);
+			loadPopupSettings();
+		});
 }
 
 function exportPopupSettings() {
-	chrome.storage.local.get(["sensitivePatterns"], (result) => {
-		const patterns = result.sensitivePatterns || {
-			params: SENSITIVE_PATTERNS.params,
-			urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
-		};
-		const url = URL.createObjectURL(
-			new Blob([JSON.stringify(patterns, null, 2)], {
-				type: "application/json",
-			}),
-		);
-		const a = Object.assign(document.createElement("a"), {
-			href: url,
-			download: `power-toys-settings-${Date.now()}.json`,
+	window
+		.getBrowserAPI()
+		.storage.local.get(["sensitivePatterns"], (result) => {
+			const patterns = result.sensitivePatterns || {
+				params: SENSITIVE_PATTERNS.params,
+				urlPatterns: DEFAULT_PATTERNS_RAW.urlPatterns,
+			};
+			const url = URL.createObjectURL(
+				new Blob([JSON.stringify(patterns, null, 2)], {
+					type: "application/json",
+				}),
+			);
+			const a = Object.assign(document.createElement("a"), {
+				href: url,
+				download: `power-toys-settings-${Date.now()}.json`,
+			});
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+			showToast("Settings exported!", "success");
 		});
-		document.body.appendChild(a);
-		a.click();
-		a.remove();
-		URL.revokeObjectURL(url);
-		showToast("Settings exported!", "success");
-	});
 }
 
 function importPopupSettings() {
@@ -1954,15 +1972,16 @@ function importPopupSettings() {
 					showToast("Invalid settings file format!", "error");
 					return;
 				}
-				chrome.storage.sync.set({ sensitivePatterns: patterns });
-				chrome.storage.local.set(
-					{ sensitivePatterns: patterns },
-					() => {
+				window
+					.getBrowserAPI()
+					.storage.sync.set({ sensitivePatterns: patterns });
+				window
+					.getBrowserAPI()
+					.storage.local.set({ sensitivePatterns: patterns }, () => {
 						showToast("Settings imported!", "success");
 						applyPatterns(patterns);
 						loadPopupSettings();
-					},
-				);
+					});
 			} catch {
 				showToast("Error parsing settings file!", "error");
 			}
@@ -2075,26 +2094,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 		document.getElementById("openTabBtn").style.display = "none";
 		cachedDomain = urlParams.get("domain") || "";
 
-		chrome.storage.local.get(["savedLinks", "savedSecrets"], (data) => {
-			if (data.savedLinks?.length) {
-				allLinksGlobal = data.savedLinks;
-				renderLinks();
-			} else {
-				// Single retry for background race
-				setTimeout(() => {
-					chrome.storage.local.get(["savedLinks"], (data2) => {
-						allLinksGlobal = data2.savedLinks || [];
-						if (allLinksGlobal.length) renderLinks();
-						else
-							document.getElementById("links-view").innerHTML =
-								'<p class="text-yellow-500 text-center py-8">No links found. Try opening from the extension popup instead.</p>';
-					});
-				}, 250);
-			}
-			if (data.savedSecrets) allSecretsGlobal = data.savedSecrets;
-		});
+		window
+			.getBrowserAPI()
+			.storage.local.get(["savedLinks", "savedSecrets"], (data) => {
+				if (data.savedLinks?.length) {
+					allLinksGlobal = data.savedLinks;
+					renderLinks();
+				} else {
+					// Single retry for background race
+					setTimeout(() => {
+						window
+							.getBrowserAPI()
+							.storage.local.get(["savedLinks"], (data2) => {
+								allLinksGlobal = data2.savedLinks || [];
+								if (allLinksGlobal.length) renderLinks();
+								else
+									document.getElementById(
+										"links-view",
+									).innerHTML =
+										'<p class="text-yellow-500 text-center py-8">No links found. Try opening from the extension popup instead.</p>';
+							});
+					}, 250);
+				}
+				if (data.savedSecrets) allSecretsGlobal = data.savedSecrets;
+			});
 	} else {
-		const [tab] = await chrome.tabs.query({
+		const [tab] = await window.getBrowserAPI().tabs.query({
 			active: true,
 			currentWindow: true,
 		});
@@ -2107,28 +2132,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 			cachedDomain = new URL(tab.url).hostname;
 		} catch {}
 
-		chrome.scripting.executeScript(
-			{ target: { tabId: tab.id }, function: collectAllLinksInPage },
-			(results) => {
-				if (results?.[0]) {
-					allLinksGlobal = results[0].result;
-					chrome.storage.local.set({ savedLinks: allLinksGlobal });
-					renderLinks();
-				}
-			},
-		);
+		window
+			.getBrowserAPI()
+			.scripting.executeScript(
+				{ target: { tabId: tab.id }, function: collectAllLinksInPage },
+				(results) => {
+					if (results?.[0]) {
+						allLinksGlobal = results[0].result;
+						window
+							.getBrowserAPI()
+							.storage.local.set({ savedLinks: allLinksGlobal });
+						renderLinks();
+					}
+				},
+			);
 
-		chrome.scripting.executeScript(
-			{ target: { tabId: tab.id }, function: collectSecretsFromPage },
-			(results) => {
-				if (results?.[0]) {
-					allSecretsGlobal = results[0].result;
-					chrome.storage.local.set({
-						savedSecrets: allSecretsGlobal,
-					});
-					setTimeout(() => renderSecrets(), 100);
-				}
-			},
-		);
+		window
+			.getBrowserAPI()
+			.scripting.executeScript(
+				{ target: { tabId: tab.id }, function: collectSecretsFromPage },
+				(results) => {
+					if (results?.[0]) {
+						allSecretsGlobal = results[0].result;
+						window.getBrowserAPI().storage.local.set({
+							savedSecrets: allSecretsGlobal,
+						});
+						setTimeout(() => renderSecrets(), 100);
+					}
+				},
+			);
 	}
 });

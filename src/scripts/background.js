@@ -1,6 +1,25 @@
 // Background script for context menu and message handling
 "use strict";
 
+// ─── API Compatibility Layer for Service Workers ───────────────────────────────
+/**
+ * Get the appropriate browser API object for Service Workers
+ * In Chrome: Uses the native chrome API
+ * In Firefox: Uses the browser API
+ */
+const getBrowserAPI = () => {
+	if (typeof chrome !== "undefined" && chrome.runtime) {
+		return chrome;
+	}
+	if (typeof browser !== "undefined" && browser.runtime) {
+		return browser;
+	}
+	console.warn(
+		"[Background API Compat] Neither chrome nor browser API available.",
+	);
+	return browser || chrome;
+};
+
 let contextMenuData = {};
 
 // ─── Link collection — injected into page via executeScript ───────────────────
@@ -243,14 +262,14 @@ const METHOD_MAP = Object.fromEntries(
 );
 
 function createContextMenus() {
-	chrome.contextMenus.removeAll(() => {
-		chrome.contextMenus.create({
+	getBrowserAPI().contextMenus.removeAll(() => {
+		getBrowserAPI().contextMenus.create({
 			id: "power-toys-main",
 			title: "Power Toys",
 			contexts: ["page", "selection", "link", "image"],
 		});
 
-		chrome.contextMenus.create({
+		getBrowserAPI().contextMenus.create({
 			id: "encode-decode-parent",
 			title: "Encode/Decode",
 			parentId: "power-toys-main",
@@ -258,7 +277,7 @@ function createContextMenus() {
 		});
 
 		for (const item of ENCODING_METHODS) {
-			chrome.contextMenus.create({
+			getBrowserAPI().contextMenus.create({
 				id: item.id,
 				title: item.title,
 				parentId: "encode-decode-parent",
@@ -269,19 +288,27 @@ function createContextMenus() {
 }
 
 // ─── Install handler ──────────────────────────────────────────────────────────
-chrome.runtime.onInstalled.addListener(() => {
-	chrome.storage.sync.get(["sensitivePatterns"], (result) => {
+getBrowserAPI().runtime.onInstalled.addListener(() => {
+	getBrowserAPI().storage.sync.get(["sensitivePatterns"], (result) => {
 		if (!result.sensitivePatterns) {
-			fetch(chrome.runtime.getURL("config/defaults.json"))
+			fetch(getBrowserAPI().runtime.getURL("config/defaults.json"))
 				.then((r) => r.json())
 				.then((defaults) => {
-					chrome.storage.sync.set({ sensitivePatterns: defaults });
-					chrome.storage.local.set({ sensitivePatterns: defaults });
+					getBrowserAPI().storage.sync.set({
+						sensitivePatterns: defaults,
+					});
+					getBrowserAPI().storage.local.set({
+						sensitivePatterns: defaults,
+					});
 				})
 				.catch(() => {
 					const empty = { params: [], urlPatterns: [] };
-					chrome.storage.sync.set({ sensitivePatterns: empty });
-					chrome.storage.local.set({ sensitivePatterns: empty });
+					getBrowserAPI().storage.sync.set({
+						sensitivePatterns: empty,
+					});
+					getBrowserAPI().storage.local.set({
+						sensitivePatterns: empty,
+					});
 				});
 		}
 	});
@@ -289,7 +316,7 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // ─── Context menu click handler ───────────────────────────────────────────────
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+getBrowserAPI().contextMenus.onClicked.addListener(async (info, tab) => {
 	const { menuItemId, selectionText } = info;
 
 	if (menuItemId === "power-toys-main") {
@@ -303,11 +330,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 		// Run both collections in parallel, then open the tab
 		const [linksResult, secretsResult] = await Promise.allSettled([
-			chrome.scripting.executeScript({
+			getBrowserAPI().scripting.executeScript({
 				target: { tabId: tab.id },
 				function: collectAllLinksInPage,
 			}),
-			chrome.scripting.executeScript({
+			getBrowserAPI().scripting.executeScript({
 				target: { tabId: tab.id },
 				function: collectSecretsMinimal,
 			}),
@@ -336,13 +363,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 						hiddenLinks: [],
 					};
 
-		await chrome.storage.local.set({
+		await getBrowserAPI().storage.local.set({
 			savedLinks: links,
 			savedSecrets: secrets,
 		});
 
-		chrome.tabs.create({
-			url: chrome.runtime.getURL(
+		getBrowserAPI().tabs.create({
+			url: getBrowserAPI().runtime.getURL(
 				`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
 			),
 		});
@@ -356,65 +383,83 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 			method: methodData.method,
 			operation: methodData.op,
 		};
-		// Create window with bottom-right positioning
-		chrome.system.display.getInfo((displays) => {
-			const windowOptions = {
-				url: chrome.runtime.getURL("src/pages/context-popup.html"),
-				type: "popup",
-				width: 500,
-				height: 500,
-			};
-			// Position at bottom-right with padding
-			if (displays.length > 0) {
-				const { left, top, width, height } = displays[0].bounds;
-				windowOptions.left = Math.max(0, left + width - 520);
-				windowOptions.top = Math.max(0, top + height - 520);
-			}
-			chrome.windows.create(windowOptions);
-		});
+
+		const isChrome = typeof chrome !== "undefined" && chrome.runtime;
+
+		if (isChrome && getBrowserAPI().system?.display) {
+			// Chrome: Create window with bottom-right positioning
+			getBrowserAPI().system.display.getInfo((displays) => {
+				const windowOptions = {
+					url: getBrowserAPI().runtime.getURL(
+						"src/pages/context-popup.html",
+					),
+					type: "popup",
+					width: 500,
+					height: 500,
+				};
+				// Position at bottom-right with padding
+				if (displays.length > 0) {
+					const { left, top, width, height } = displays[0].bounds;
+					windowOptions.left = Math.max(0, left + width - 520);
+					windowOptions.top = Math.max(0, top + height - 520);
+				}
+				getBrowserAPI().windows.create(windowOptions);
+			});
+		} else {
+			// Firefox: Create tab instead (doesn't support windows API)
+			getBrowserAPI().tabs.create({
+				url: getBrowserAPI().runtime.getURL(
+					"src/pages/context-popup.html",
+				),
+				active: true,
+			});
+		}
 	}
 });
 
 // ─── Message handler — validate sender origin ─────────────────────────────────
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	// Only respond to messages from our own extension pages
-	if (
-		sender.origin &&
-		sender.origin !== `chrome-extension://${chrome.runtime.id}`
-	) {
-		return false;
-	}
-	if (request?.action === "getContextData") {
-		sendResponse(contextMenuData);
-		return false;
-	}
+getBrowserAPI().runtime.onMessage.addListener(
+	(request, sender, sendResponse) => {
+		// Only respond to messages from our own extension pages
+		const isChrome = typeof chrome !== "undefined" && chrome.runtime;
+		const expectedOrigin = isChrome
+			? `chrome-extension://${getBrowserAPI().runtime.id}`
+			: `moz-extension://${getBrowserAPI().runtime.id}`;
+		if (sender.origin && sender.origin !== expectedOrigin) {
+			return false;
+		}
+		if (request?.action === "getContextData") {
+			sendResponse(contextMenuData);
+			return false;
+		}
 
-	// Handle bulk URL opener actions
-	if (request?.action === "openUrlsInNewTabs" && request.urls) {
-		request.urls.forEach((url) => {
-			chrome.tabs.create({ url, active: false });
-		});
-		sendResponse({ status: "success" });
+		// Handle bulk URL opener actions
+		if (request?.action === "openUrlsInNewTabs" && request.urls) {
+			request.urls.forEach((url) => {
+				getBrowserAPI().tabs.create({ url, active: false });
+			});
+			sendResponse({ status: "success" });
+			return false;
+		}
+
+		if (request?.action === "openUrlsInNewWindow" && request.urls) {
+			getBrowserAPI().windows.create(
+				{ url: request.urls, incognito: false },
+				(window) => {
+					sendResponse({ status: "success", windowId: window.id });
+				},
+			);
+			return true;
+		}
+
+		if (request?.action === "openUrlsByDomain" && request.domainMap) {
+			request.domainMap.forEach(([domain, urls]) => {
+				getBrowserAPI().windows.create({ url: urls, incognito: false });
+			});
+			sendResponse({ status: "success" });
+			return false;
+		}
+
 		return false;
-	}
-
-	if (request?.action === "openUrlsInNewWindow" && request.urls) {
-		chrome.windows.create(
-			{ url: request.urls, incognito: false },
-			(window) => {
-				sendResponse({ status: "success", windowId: window.id });
-			},
-		);
-		return true;
-	}
-
-	if (request?.action === "openUrlsByDomain" && request.domainMap) {
-		request.domainMap.forEach(([domain, urls]) => {
-			chrome.windows.create({ url: urls, incognito: false });
-		});
-		sendResponse({ status: "success" });
-		return false;
-	}
-
-	return false;
-});
+	},
+);
