@@ -9,7 +9,10 @@
 	"scripts": {
 		"build": "node build.js",
 		"build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/tailwind.min.css",
-		"dev": "node build.js --watch"
+		"build:all": "concurrently \"npm run build\" \"npm run build:css\"",
+		"watch": "node build.js --watch",
+		"watch:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/tailwind.min.css --watch",
+		"watch:all": "concurrently \"npm run watch\" \"npm run watch:css\""
 	},
 	"keywords": [
 		"security",
@@ -30,5 +33,8 @@
 	"dependencies": {
 		"@tailwindcss/cli": "^4.3.0",
 		"tailwindcss": "^4.3.0"
+	},
+	"devDependencies": {
+		"concurrently": "^8.2.0"
 	}
 }
