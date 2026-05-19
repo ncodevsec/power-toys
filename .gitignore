@@ -31,4 +31,4 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
-src/styles/tailwind.min.css
+src/styles/main.css

@@ -130,7 +130,7 @@ const generateTailwindCSS = () => {
 		}
 
 		const inputCSS = path.join(SRC_DIR, "styles", "input.css");
-		const outputCSS = path.join(SRC_DIR, "styles", "tailwind.min.css");
+		const outputCSS = path.join(SRC_DIR, "styles", "main.css");
 
 		// Create input.css if it doesn't exist
 		if (!fs.existsSync(inputCSS)) {

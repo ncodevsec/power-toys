@@ -8,10 +8,10 @@
 	},
 	"scripts": {
 		"build": "node build.js",
-		"build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/tailwind.min.css",
+		"build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/main.css",
 		"build:all": "concurrently \"npm run build\" \"npm run build:css\"",
 		"watch": "node build.js --watch",
-		"watch:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/tailwind.min.css --watch",
+		"watch:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/main.css --watch",
 		"watch:all": "concurrently \"npm run watch\" \"npm run watch:css\""
 	},
 	"keywords": [
