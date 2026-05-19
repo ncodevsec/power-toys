@@ -1532,25 +1532,6 @@ function flashCopied(btn, origHtml) {
 	}, 1500);
 }
 
-// Delegated to main event handler
-// Delegated to main event handler
-// Delegated to unified event delegation system
-
-document.getElementById("openTabBtn").addEventListener("click", async () => {
-	const [tab] = await chrome.tabs.query({
-		active: true,
-		currentWindow: true,
-	});
-	try {
-		const domain = new URL(tab.url).hostname;
-		chrome.tabs.create({
-			url: chrome.runtime.getURL(
-				`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`,
-			),
-		});
-	} catch {}
-});
-
 // ─── Unified Event Delegation System for Action Buttons ────────────────────────
 // This consolidates all action button handlers using data-action attributes
 document.addEventListener("click", async (event) => {
