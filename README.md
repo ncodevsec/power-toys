@@ -40,10 +40,7 @@ Quickly extract links, encode/decode data, and simplify everyday security tasks 
 ### For Chrome
 
 1. **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/ncodevsec/power-toys.git
-    ```
+    - `git clone https://github.com/ncodevsec/power-toys.git`
 
 2. **Open Chrome Extensions:**
     - Navigate to `chrome://extensions/`
@@ -58,10 +55,7 @@ Quickly extract links, encode/decode data, and simplify everyday security tasks 
 ### For Firefox
 
 1. **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/ncodevsec/power-toys.git
-    ```
+    - `git clone https://github.com/ncodevsec/power-toys.git`
 
 2. **In Firefox URL bar:**
     - Navigate to `about:debugging#/runtime/this-firefox`
@@ -210,35 +204,24 @@ Automated detection of hardcoded secrets and sensitive patterns:
 
 ## Technical Details
 
-### Chrome Extension
+| Aspect               | Chrome                                                      | Firefox                                               |
+| -------------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| **Manifest Version** | 3 (Latest standard)                                         | 2 (With V3 compatibility layer)                       |
+| **Permissions**      | activeTab, scripting, storage, contextMenus, system.display | activeTab, scripting, storage, contextMenus           |
+| **Host Permissions** | `<all_urls>`                                                | `<all_urls>`                                          |
+| **Background**       | Service Worker (`background.js`)                            | Background Script (`background.js` + `api-compat.js`) |
+| **Popup**            | `popup.html` + `popup.js`                                   | `popup.html` + `popup.js`                             |
+| **Styling**          | Tailwind CSS 4.3.0 + Custom CSS                             | Tailwind CSS 4.3.0 + Custom CSS                       |
+| **Storage API**      | Chrome Storage API                                          | Firefox Storage API                                   |
+| **Node.js Version**  | v16+ (for development)                                      | v16+ (for development)                                |
 
-| Aspect               | Details                                                        |
-| -------------------- | -------------------------------------------------------------- |
-| **Manifest Version** | 3 (Latest Chrome Extension standard)                           |
-| **Permissions**      | activeTab, scripting, storage, contextMenus, system.display    |
-| **Host Permissions** | All URLs (`<all_urls>`)                                        |
-| **Service Worker**   | `src/scripts/background.js` (background tasks & context menus) |
-| **Popup Interface**  | `src/pages/popup.html` + `src/pages/popup.js`                  |
-| **Styling**          | Tailwind CSS 2.2.19 + Custom CSS (style.css)                   |
-| **Storage**          | Chrome Storage API for persistent configuration                |
+### Build & Development
 
-### Firefox Extension
-
-| Aspect                | Details                                                   |
-| --------------------- | --------------------------------------------------------- |
-| **Manifest Version**  | 2 (With V3 compatibility layer)                           |
-| **Permissions**       | activeTab, scripting, storage, contextMenus               |
-| **Host Permissions**  | All URLs (`<all_urls>`)                                   |
-| **Background Script** | `src/scripts/background.js` + `src/scripts/api-compat.js` |
-| **Popup Interface**   | `src/pages/popup.html` + `src/pages/popup.js`             |
-| **Styling**           | Tailwind CSS 2.2.19 + Custom CSS (style.css)              |
-| **Storage**           | Firefox Storage API for persistent configuration          |
-
-### General
-
-| Aspect     | Details                                    |
-| ---------- | ------------------------------------------ |
-| **Author** | [@ncodevsec](https://github.com/ncodevsec) |
+- **Build System**: `build.js` - Automated packaging for both browsers
+- **CSS Framework**: Tailwind CSS 4.3.0 with custom styling
+- **Package Manager**: npm
+- **Output**: `dist/` folder with separate `chrome/` and `firefox/` builds
+- **Configuration Files**: `manifests/manifest.chrome.json` and `manifests/manifest.firefox.json`
 
 ## Requirements
 
@@ -253,6 +236,51 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - **Browser**: Firefox 88+
 - **Platform**: Windows, macOS, or Linux
 - **Developer Mode**: Temporary add-on loading for testing
+
+## Changelog
+
+### v0.5 (Current)
+
+- **Refactored popup & context menu styles** with Tailwind CSS for consistent, modern design
+- **Centralized design tokens** in theme layer for single source of truth (SSoT) architecture
+- **Added cross-browser API compatibility layer** for seamless Firefox and Chrome support
+- **Optimized CSS architecture** with Tailwind integration for better maintainability
+- **Implemented bulk URL opener functionality** for efficient opening of multiple links
+- **Enhanced context menu structure** for improved usability and organization
+- **Added copy buttons for header groups** with quick access to copy links, parameters, and secrets
+- **Added input paste functionality** and improved button styles
+- **Added sensitive parameter filter** with console log cleanup
+- **Fixed tab opening via event delegation** for streamlined event handling
+- **Updated build scripts** with concurrently support for improved dev workflow
+
+### v0.4
+
+- Improved overall architecture, styling, and cross-browser support
+- Enhanced URL handling with protocol-relative URL support
+- Improved secret grouping and categorization
+- Added sensitive secrets filter button with improved functionality
+- Updated secrets popup styles and logic for better UX
+- Renamed "URLs & Paths" tab to "Links" for clarity
+- Improved file type filtering in popup interface
+
+### v0.3
+
+- Added Secrets tab and functionality to collect and display sensitive information
+- Enhanced popup with file type filtering and modal for viewing full content
+- Added copy parameters menu with options for names, values, and both
+- Security hardening, XSS fixes, and performance optimizations
+- Improved README formatting
+
+### v0.2
+
+- Added Secrets tab functionality to detect and display sensitive information
+- Initial implementation of sensitive data detection and collection
+- Basic secret pattern recognition and categorization
+
+### v0.1
+
+- Initial release with core settings and background setup
+- Foundation for extension infrastructure and core components
 
 ## License
 
