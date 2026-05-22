@@ -263,15 +263,32 @@ const METHOD_MAP = Object.fromEntries(
 
 function createContextMenus() {
 	getBrowserAPI().contextMenus.removeAll(() => {
+		// Direct action menu for page context (no selection) - opens full view
+		getBrowserAPI().contextMenus.create({
+			id: "power-toys-page",
+			title: "Power Toys",
+			contexts: ["page"],
+		});
+
+		// Main menu shown only when text is selected
 		getBrowserAPI().contextMenus.create({
 			id: "power-toys-main",
 			title: "Power Toys",
-			contexts: ["page", "selection", "link", "image"],
+			contexts: ["selection"],
 		});
 
+		// Separate Encode submenu
 		getBrowserAPI().contextMenus.create({
-			id: "encode-decode-parent",
-			title: "Encode/Decode",
+			id: "encode-parent",
+			title: "Encode",
+			parentId: "power-toys-main",
+			contexts: ["selection"],
+		});
+
+		// Separate Decode submenu
+		getBrowserAPI().contextMenus.create({
+			id: "decode-parent",
+			title: "Decode",
 			parentId: "power-toys-main",
 			contexts: ["selection"],
 		});
@@ -280,7 +297,8 @@ function createContextMenus() {
 			getBrowserAPI().contextMenus.create({
 				id: item.id,
 				title: item.title,
-				parentId: "encode-decode-parent",
+				parentId:
+					item.op === "encode" ? "encode-parent" : "decode-parent",
 				contexts: ["selection"],
 			});
 		}
@@ -319,7 +337,7 @@ getBrowserAPI().runtime.onInstalled.addListener(() => {
 getBrowserAPI().contextMenus.onClicked.addListener(async (info, tab) => {
 	const { menuItemId, selectionText } = info;
 
-	if (menuItemId === "power-toys-main") {
+	if (menuItemId === "power-toys-page" || menuItemId === "power-toys-main") {
 		// Validate tab URL before parsing
 		let domain = "";
 		try {
