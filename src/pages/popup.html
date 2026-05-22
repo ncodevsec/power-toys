@@ -52,7 +52,7 @@
             <div class="flex items-center gap-2">
                 <button id="sensitiveLinkFilterBtn" class="btn btn-danger" title="Show only sensitive links/params"
                     data-action="filter-sensitive-links">Sensitive</button>
-                <button id="copyLinksBtn" class="btn btn-success" title="Copy Links" data-action="copy-links">
+                <button id="copyLinksBtn" class="btn" title="Copy Links" data-action="copy-links">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">
@@ -95,7 +95,7 @@
             <div class="flex items-center gap-2">
                 <button id="sensitiveSecretsFilterBtn" class="btn btn-danger" title="Show only sensitive secrets"
                     data-action="filter-sensitive-secrets">Sensitive</button>
-                <button id="copySecretsBtn" class="btn btn-success text-xs px-3 py-1" title="Copy Secrets"
+                <button id="copySecretsBtn" class="btn text-xs px-3 py-1" title="Copy Secrets"
                     data-action="copy-secrets">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -123,7 +123,7 @@
             <div class="flex items-center gap-2 mb-2">
                 <button id="sensitiveParamsFilterBtn" class="btn btn-danger" title="Show only sensitive params"
                     data-action="filter-sensitive-params">Sensitive</button>
-                <button id="copyParamsBtn" class="btn btn-success" title="Copy Params - Click for options"
+                <button id="copyParamsBtn" class="btn" title="Copy Params - Click for options"
                     data-action="copy-params-menu">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -174,8 +174,7 @@
             <div class="flex gap-2 flex-wrap">
                 <button id="bulkPasteBtn" class="btn btn-primary" title="Paste from clipboard"
                     data-action="bulk-paste">Paste</button>
-                <button id="bulkCopyBtn" class="btn btn-primary" title="Copy URLs from input"
-                    data-action="bulk-copy">Copy</button>
+                <button id="bulkCopyBtn" class="btn" title="Copy URLs from input" data-action="bulk-copy">Copy</button>
                 <button id="bulkClearBtn" class="btn btn-danger" title="Clear input"
                     data-action="bulk-clear">Clear</button>
             </div>
@@ -197,8 +196,8 @@
                         <span class="text-sm font-medium">Open Each Domain in Window</span>
                     </label>
                 </div>
-                <button id="bulkOpenBtn" class="btn btn-primary text-xs px-4 py-1 mt-3"
-                    title="Open URLs with selected option" data-action="bulk-open">Open</button>
+                <button id="bulkOpenBtn" class="btn btn-primary mt-2" title="Open URLs with selected option"
+                    data-action="bulk-open">Open</button>
             </div>
 
             <!-- Results Info -->
@@ -254,8 +253,7 @@
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400">Output</label>
-                    <button id="copyResultBtn" class="btn btn-success" data-action="copy-result"
-                        title="Copy result to clipboard">
+                    <button id="copyResultBtn" class="btn" data-action="copy-result" title="Copy result to clipboard">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                             style="display:inline-block;margin-right:0.25rem">
@@ -274,14 +272,14 @@
     <div id="settings-section" class="section-content hidden">
         <div id="settingsTabBar" class="sub-tab-bar">
             <div>
-                <div class="settings-tab active" data-settings-tab="parameter-keywords">Parameter Keywords</div>
+                <div class="settings-tab active" data-settings-tab="general">General</div>
                 <div class="settings-tab" data-settings-tab="url-patterns">URL Patterns</div>
-                <div class="settings-tab" data-settings-tab="general">General</div>
+                <div class="settings-tab" data-settings-tab="parameter-keywords">Parameter Keywords</div>
             </div>
         </div>
 
         <!-- Parameter Keywords Tab -->
-        <div id="parameter-keywords" class="settings-tab-content active">
+        <div id="parameter-keywords" class="settings-tab-content">
             <div class="section-card">
                 <div class="section-title">Parameter Keywords</div>
                 <div class="section-description">Enter comma-separated keywords that indicate sensitive parameters.
@@ -329,7 +327,7 @@
         </div>
 
         <!-- General Tab -->
-        <div id="general" class="settings-tab-content">
+        <div id="general" class="settings-tab-content active">
             <div class="section-card">
                 <div class="section-title">About</div>
                 <div class="section-description">Power Toys Extension — Essential toolkit for pentesters and bug hunters
@@ -381,7 +379,7 @@
                 <pre id="modalContent" class="modal-pre"></pre>
             </div>
             <div class="modal-footer">
-                <button id="modalCopyBtn" class="btn btn-success" data-action="modal-copy">
+                <button id="modalCopyBtn" class="btn" data-action="modal-copy">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon-inline">

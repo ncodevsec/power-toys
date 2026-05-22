@@ -1420,8 +1420,6 @@ function renderSecrets() {
 			bullet.className = "bullet-point mr-1";
 			bullet.textContent = "•";
 			const code = document.createElement("code");
-			code.className =
-				"text-xs bg-gray-900 text-green-400 px-2 py-1 rounded font-mono flex-1 break-all";
 
 			// Render as link if it's a URL-type item
 			if (isHiddenLinkType || (isUrlCategory && isUrlType(item))) {

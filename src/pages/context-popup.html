@@ -8,48 +8,50 @@
     <link href="../styles/main.css" rel="stylesheet">
 </head>
 
-<body class="context-popup-body">
-    <div class="context-popup-container">
-        <div class="context-header">
-            <span class="context-title">Encode/Decode</span>
-            <div class="context-header-buttons">
-                <button id="openFullScreenBtn" class="context-header-btn" title="Open in Full Screen">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
-                        </path>
-                    </svg>
-                </button>
-                <span id="methodDisplay" class="method-badge"></span>
-            </div>
-        </div>
-
-        <div class="context-section">
-            <div class="context-label">Input</div>
-            <textarea id="contextInput" class="context-textarea" rows="6" readonly></textarea>
-        </div>
-
-        <div class="context-section">
-            <div class="context-label">Output</div>
-            <textarea id="contextOutput" class="context-textarea" rows="6" readonly></textarea>
-        </div>
-
-        <div class="context-buttons">
-            <button id="contextCopyBtn" class="context-btn context-btn-copy">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+<body class="p-5">
+    <div class="flex justify-between items-center mb-6 border-b pb-4 border-gray-200 dark:border-gray-700">
+        <h1 class="text-2xl font-black main-title">Encode<span class="pro-badge text-2xl">/Decode</span></h1>
+        <div class="flex items-center space-x-2">
+            <button id="openFullScreenBtn" class="btn btn-primary" title="Open in Full Screen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                    </path>
+                </svg>
+            </button>
+            <span id="methodDisplay" class="badge-count"></span>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Input</label>
+            <textarea id="contextInput" class="cyber-input resize-none" rows="6" readonly></textarea>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Output</label>
+            <textarea id="contextOutput" class="cyber-input resize-none" rows="6" readonly></textarea>
+        </div>
+
+        <div class="flex gap-2">
+            <button id="contextCopyBtn" class="flex-1 btn btn-success font-semibold py-2 px-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="icon-inline">
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                 </svg>
                 Copy
             </button>
-            <button id="contextRepeatBtn" class="context-btn context-btn-repeat">
-                <span id="contextRepeatCounter" class="context-counter">0</span>
+            <button id="contextRepeatBtn" class="flex-1 btn btn-warning font-semibold py-2 px-3">
+                <span id="contextRepeatCounter" class="repeat-counter">0</span>
                 <span>Repeat</span>
             </button>
         </div>
     </div>
+
     <div id="cp-toast"></div>
 
     <script src="../utils/api-compat.js"></script>

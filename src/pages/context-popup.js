@@ -21,7 +21,7 @@ initTheme();
 
 // Check full-screen mode
 if (new URLSearchParams(location.search).get("fullScreen") === "true") {
-	document.body.classList.add("full-screen");
+	document.body.classList.add("full-tab");
 }
 
 // Encoding/Decoding functions (self-contained)
@@ -113,36 +113,38 @@ if (urlParams.has("selectedText")) {
 // Initialize with data from background script (non-fullscreen mode)
 window.addEventListener("DOMContentLoaded", () => {
 	if (!urlParams.has("selectedText")) {
-		window.getBrowserAPI().runtime.sendMessage({ action: "getContextData" }, (response) => {
-			if (
-				!response?.selectedText ||
-				!response.method ||
-				!response.operation
-			)
-				return;
-			if (!encodingFunctions[response.method]?.[response.operation])
-				return;
+		window
+			.getBrowserAPI()
+			.runtime.sendMessage({ action: "getContextData" }, (response) => {
+				if (
+					!response?.selectedText ||
+					!response.method ||
+					!response.operation
+				)
+					return;
+				if (!encodingFunctions[response.method]?.[response.operation])
+					return;
 
-			currentMethod = response.method;
-			currentOperation = response.operation;
+				currentMethod = response.method;
+				currentOperation = response.operation;
 
-			document.getElementById("contextInput").value =
-				response.selectedText;
-			document.getElementById("methodDisplay").textContent =
-				`${response.method} (${response.operation})`;
+				document.getElementById("contextInput").value =
+					response.selectedText;
+				document.getElementById("methodDisplay").textContent =
+					`${response.method} (${response.operation})`;
 
-			try {
-				document.getElementById("contextOutput").value =
-					encodingFunctions[response.method][response.operation](
-						response.selectedText,
-					);
-			} catch (e) {
-				document.getElementById("contextOutput").value =
-					`Error: ${e.message}`;
-			}
-			repeatCount = 0;
-			repeatCounterEl.textContent = 0;
-		});
+				try {
+					document.getElementById("contextOutput").value =
+						encodingFunctions[response.method][response.operation](
+							response.selectedText,
+						);
+				} catch (e) {
+					document.getElementById("contextOutput").value =
+						`Error: ${e.message}`;
+				}
+				repeatCount = 0;
+				repeatCounterEl.textContent = 0;
+			});
 	}
 
 	// Open full-screen tab
@@ -159,9 +161,9 @@ window.addEventListener("DOMContentLoaded", () => {
 				fullScreen: "true",
 			});
 			window.getBrowserAPI().tabs.create({
-				url: window.getBrowserAPI().runtime.getURL(
-					`src/pages/context-popup.html?${params}`,
-				),
+				url: window
+					.getBrowserAPI()
+					.runtime.getURL(`src/pages/context-popup.html?${params}`),
 			});
 			window.close();
 		});
