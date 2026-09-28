@@ -115,6 +115,17 @@ const copyFile = (src, dest) => {
 
 /**
  * Generate Tailwind CSS
+ *
+ * NOTE: Tailwind CSS v4 split its CLI out into the separate
+ * `@tailwindcss/cli` package (the core `tailwindcss` package no longer
+ * ships a bin). We invoke it by package name (`npx @tailwindcss/cli`)
+ * rather than by guessing a bin name, so this keeps working regardless
+ * of how a given Tailwind version wires up its binary.
+ *
+ * We also require `tailwind.config.js` to exist (see below) because the
+ * theme customizations that give this extension its look (colors, radii,
+ * spacing) live there and are pulled in explicitly via `@config` in
+ * src/styles/input.css.
  */
 const generateTailwindCSS = () => {
 	try {
@@ -137,12 +148,13 @@ const generateTailwindCSS = () => {
 			fs.mkdirSync(path.dirname(inputCSS), { recursive: true });
 			fs.writeFileSync(
 				inputCSS,
-				"@tailwind base;\n@tailwind components;\n@tailwind utilities;\n",
+				'@import "tailwindcss";\n@config "../../tailwind.config.js";\n',
 			);
 		}
 
-		// Run tailwindcss CLI
-		const command = `npx tailwindcss -i "${inputCSS}" -o "${outputCSS}" --minify`;
+		// Run the Tailwind v4 CLI (@tailwindcss/cli), invoked by package
+		// name so it resolves correctly regardless of local bin naming.
+		const command = `npx @tailwindcss/cli -i "${inputCSS}" -o "${outputCSS}" --minify`;
 		execSync(command, { stdio: "inherit", cwd: ROOT_DIR });
 
 		log("Tailwind CSS generated successfully", "success");
@@ -263,6 +275,15 @@ const build = () => {
 
 		// Generate Tailwind CSS
 		generateTailwindCSS();
+
+		// A missing stylesheet means an unstyled extension — never report
+		// that as a clean success.
+		if (!fs.existsSync(path.join(SRC_DIR, "styles", "main.css"))) {
+			log(
+				"src/styles/main.css was not generated — the extension will be UNSTYLED. Run `npm install` and fix the Tailwind error above.",
+				"warn",
+			);
+		}
 
 		// Build for each browser
 		for (const [browserName, config] of Object.entries(BROWSERS)) {

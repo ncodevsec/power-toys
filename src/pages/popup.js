@@ -55,49 +55,9 @@ const FILE_TYPE_ORDER = [
 ];
 
 // ─── Encoding functions (single source of truth) ──────────────────────────────
-const encodingFunctions = {
-	base64: {
-		encode: (t) => btoa(unescape(encodeURIComponent(t))),
-		decode: (t) => decodeURIComponent(escape(atob(t))),
-	},
-	url: { encode: encodeURIComponent, decode: decodeURIComponent },
-	html: {
-		encode: (t) => {
-			const d = document.createElement("div");
-			d.textContent = t;
-			return d.innerHTML;
-		},
-		decode: (t) => {
-			const d = document.createElement("div");
-			d.innerHTML = t;
-			return d.textContent || d.innerText || "";
-		},
-	},
-	hex: {
-		encode: (t) =>
-			Array.from(t, (c) =>
-				c.charCodeAt(0).toString(16).padStart(2, "0"),
-			).join(""),
-		decode: (t) => {
-			const s = t.replace(/\s/g, "");
-			let r = "";
-			for (let i = 0; i < s.length; i += 2)
-				r += String.fromCharCode(parseInt(s.substr(i, 2), 16));
-			return r;
-		},
-	},
-	unicode: {
-		encode: (t) =>
-			Array.from(
-				t,
-				(c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
-			).join(""),
-		decode: (t) =>
-			t.replace(/\\u([0-9a-fA-F]{4})/g, (_, c) =>
-				String.fromCharCode(parseInt(c, 16)),
-			),
-	},
-};
+// Defined once in src/utils/encoding.js and loaded before this script so the
+// popup and the context-menu quick view can never drift apart.
+const encodingFunctions = window.PowerToysEncoding;
 
 // ─── Safe text helper — escapes for use in textContent, not innerHTML ─────────
 function escapeHtml(str) {
@@ -220,9 +180,11 @@ async function loadPatterns() {
 }
 
 // ─── Link collection (injected into page) ────────────────────────────────────
+// NOTE: kept logically identical to `collectAllLinksInPage` in
+// src/scripts/background.js (see the comment there for why the two files
+// each need their own copy of this function).
 function collectAllLinksInPage() {
 	const uniqueLinks = new Map();
-	const IMG_RE = /\.(jpeg|jpg|gif|png|svg|webp|ico)$/i;
 	const EXT_RE = /\.[a-zA-Z0-9]+$/;
 	const selectors =
 		"a[href],link[href],script[src],img[src],iframe[src],source[src],video[src],audio[src],[data-url]";
@@ -233,7 +195,6 @@ function collectAllLinksInPage() {
 
 		const cleanUrl = url.split("?")[0].split("#")[0];
 		let category;
-		const EXT_RE = /\.[a-zA-Z0-9]+$/;
 		if (EXT_RE.test(cleanUrl)) category = "Files";
 		else if (
 			cleanUrl.endsWith("/") ||

@@ -6,6 +6,9 @@ let repeatCount = 0;
 
 const repeatCounterEl = document.getElementById("contextRepeatCounter");
 
+// Shared encode/decode transforms — see src/utils/encoding.js.
+const encodingFunctions = window.PowerToysEncoding;
+
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const darkModeQuery = matchMedia("(prefers-color-scheme: dark)");
 function initTheme() {
@@ -23,51 +26,6 @@ initTheme();
 if (new URLSearchParams(location.search).get("fullScreen") === "true") {
 	document.body.classList.add("full-tab");
 }
-
-// Encoding/Decoding functions (self-contained)
-const encodingFunctions = {
-	base64: {
-		encode: (t) => btoa(unescape(encodeURIComponent(t))),
-		decode: (t) => decodeURIComponent(escape(atob(t))),
-	},
-	url: { encode: encodeURIComponent, decode: decodeURIComponent },
-	html: {
-		encode: (t) => {
-			const d = document.createElement("div");
-			d.textContent = t;
-			return d.innerHTML;
-		},
-		decode: (t) => {
-			const d = document.createElement("div");
-			d.innerHTML = t;
-			return d.textContent || d.innerText || "";
-		},
-	},
-	hex: {
-		encode: (t) =>
-			Array.from(t, (c) =>
-				c.charCodeAt(0).toString(16).padStart(2, "0"),
-			).join(""),
-		decode: (t) => {
-			const s = t.replace(/\s/g, "");
-			let r = "";
-			for (let i = 0; i < s.length; i += 2)
-				r += String.fromCharCode(parseInt(s.substr(i, 2), 16));
-			return r;
-		},
-	},
-	unicode: {
-		encode: (t) =>
-			Array.from(
-				t,
-				(c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
-			).join(""),
-		decode: (t) =>
-			t.replace(/\\u([0-9a-fA-F]{4})/g, (_, c) =>
-				String.fromCharCode(parseInt(c, 16)),
-			),
-	},
-};
 
 function showToast(msg, type = "info") {
 	const toast = document.getElementById("cp-toast");

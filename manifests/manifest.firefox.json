@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Power Toys",
-	"version": "0.5.2",
+	"version": "0.5.3",
 	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
 	"permissions": ["activeTab", "scripting", "storage", "contextMenus"],
 	"host_permissions": ["<all_urls>"],
@@ -22,15 +22,6 @@
 			"128": "assets/images/power-toys-128.png"
 		}
 	},
-	"web_accessible_resources": [
-		{
-			"resources": [
-				"src/pages/context-popup.html",
-				"config/defaults.json"
-			],
-			"matches": ["<all_urls>"]
-		}
-	],
 	"content_security_policy": {
 		"extension_pages": "script-src 'self'; object-src 'none';"
 	},

@@ -6,11 +6,11 @@
 
 **An essential toolkit for pentesters and bug hunters**
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?logo=google-chrome&logoColor=white)](https://chrome.google.com)
-[![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://chrome.google.com)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
+[![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.2-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.5.3-informational)](package.json)
 
 ---
 
@@ -23,49 +23,63 @@ Quickly extract links, encode/decode data, and simplify everyday security tasks 
 ## ✨ Features
 
 | Feature                      | Description                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| **Link Extraction**          | Extract all links from any webpage with categorization (JS, JSON, Images, etc.) |
-| **Encode/Decode Tools**      | Support for Base64, URL encoding, HTML entities, Hex, and Unicode escaping      |
-| **Sensitive Data Detection** | Automatically highlight links and parameters containing sensitive keywords      |
-| **Link Categorization**      | Organize extracted links by type (paths, JavaScript, JSON, images, etc.)        |
-| **Search & Filter**          | Search and filter links with real-time results and sensitive link highlighting  |
-| **Customizable Patterns**    | Define custom regex patterns for sensitive URLs and parameter keywords          |
-| **Settings Management**      | Import/export configurations for easy sharing and backup                        |
-| **Dark Mode Support**        | Light and dark theme options for comfortable browsing                           |
-| **Context Menu Integration** | Right-click access to quick tools and functions                                 |
-| **Lightweight & Fast**       | Minimal performance impact with instant results                                 |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| **Link Extraction**          | Extract all links from any webpage with categorization (Files, Paths, Others) |
+| **Encode/Decode Tools**      | Support for Base64, URL encoding, HTML entities, Hex, and Unicode escaping     |
+| **Sensitive Data Detection** | Automatically highlight links and parameters containing sensitive keywords    |
+| **Link Categorization**      | Organize extracted links by type, with a nested file-type breakdown for Files |
+| **Search & Filter**          | Search and filter links with real-time results and sensitive link highlighting |
+| **Customizable Patterns**    | Define custom regex patterns for sensitive URLs and parameter keywords        |
+| **Settings Management**      | Import/export configurations for easy sharing and backup                      |
+| **Dark Mode Support**        | Light and dark theme options for comfortable browsing                         |
+| **Context Menu Integration** | Right-click access to quick tools and functions                               |
+| **Lightweight & Fast**       | Minimal performance impact with instant results                               |
+
+## Project Architecture
+
+Power Toys is built from **one unified source tree**, not separate Chrome/Firefox codebases. `build.js` copies `src/` and `config/` into `dist/chrome` and `dist/firefox`, stamping each with its own browser-specific manifest from `manifests/`. You always build before loading the extension — there is no pre-built `chrome/` or `firefox/` folder checked into the repo.
 
 ## Installation
 
-### For Chrome
+### 1. Clone and install dependencies
 
-1. **Clone the repository:**
-    - `git clone https://github.com/ncodevsec/power-toys.git`
+```bash
+git clone https://github.com/ncodevsec/power-toys.git
+cd power-toys
+npm install
+```
 
-2. **Open Chrome Extensions:**
-    - Navigate to `chrome://extensions/`
-    - Enable **Developer mode** (toggle in top-right)
+### 2. Build the extension
 
-3. **Load the extension:**
-    - Click **Load unpacked**
-    - Select the `power-toys/chrome` folder
+```bash
+npm run build
+```
 
-4. **Start using Power Toys!** ✅
+This generates the Tailwind CSS bundle and produces two ready-to-load folders:
 
-### For Firefox
+```
+dist/
+├── chrome/    # Load this in Chrome
+└── firefox/   # Load this in Firefox
+```
 
-1. **Clone the repository:**
-    - `git clone https://github.com/ncodevsec/power-toys.git`
+Run `npm run watch` during development to rebuild automatically. `npm run build:css` / `npm run watch:css` regenerate just the stylesheet.
 
-2. **In Firefox URL bar:**
-    - Navigate to `about:debugging#/runtime/this-firefox`
-    - Click **This Firefox** in the left sidebar
+### 3. Load it in your browser
 
-3. **Load the extension:**
-    - Click **Load Temporary Add-on**
-    - Select the `manifest.json` file from the `power-toys/firefox` folder
+**Chrome**
 
-4. **Start using Power Toys!** ✅
+1. Navigate to `chrome://extensions/`
+2. Enable **Developer mode** (toggle in top-right)
+3. Click **Load unpacked** and select the `dist/chrome` folder
+4. Start using Power Toys! ✅
+
+**Firefox**
+
+1. Navigate to `about:debugging#/runtime/this-firefox`
+2. Click **This Firefox** in the left sidebar
+3. Click **Load Temporary Add-on** and select `dist/firefox/manifest.json`
+4. Start using Power Toys! ✅
 
 ## Usage
 
@@ -81,43 +95,35 @@ Right-click on any page element and select Power Toys options for instant access
 
 ```
 power-toys/
-├── chrome/                    # Chrome extension (Manifest V3)
-│   ├── manifest.json          # Chrome manifest
-│   ├── config/
-│   │   └── defaults.json      # Default sensitive parameter patterns & keywords
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── popup.html     # Main popup interface with tab-based UI
-│   │   │   ├── popup.js       # Popup logic, event handlers, encoding/decoding
-│   │   │   ├── context-popup.html # Context menu quick access interface
-│   │   │   └── context-popup.js
-│   │   ├── scripts/
-│   │   │   └── background.js  # Service worker - link collection, context menus
-│   │   └── styles/
-│   │       ├── style.css      # Unified styling, dark mode support, responsive design
-│   │       └── tailwind.min.css
+├── build.js                    # Unified build script — generates dist/chrome & dist/firefox
+├── package.json
+├── tailwind.config.js          # Tailwind v4 theme, wired in via @config in input.css
+├── config/
+│   └── defaults.json           # Default sensitive parameter patterns & keywords
+├── manifests/
+│   ├── manifest.chrome.json    # Chrome manifest (MV3, service worker background)
+│   └── manifest.firefox.json   # Firefox manifest (MV3, background script)
+├── src/                        # Single source of truth, copied to both builds
+│   ├── pages/
+│   │   ├── popup.html          # Main popup interface with tab-based UI
+│   │   ├── popup.js            # Popup logic, rendering, encoding/decoding
+│   │   ├── context-popup.html  # Context menu quick-access interface
+│   │   └── context-popup.js
+│   ├── scripts/
+│   │   └── background.js       # Service worker/background script — context menus, link & secret collection
+│   ├── utils/
+│   │   ├── api-compat.js       # Chrome/Firefox API compatibility layer
+│   │   └── encoding.js         # Shared encode/decode transforms (single source of truth)
+│   ├── styles/
+│   │   ├── input.css           # Tailwind entry point (generates main.css on build)
+│   │   └── main.css            # Generated — not committed, produced by `npm run build`
 │   └── assets/
-│       └── images/            # Icon and image assets
-├── firefox/                   # Firefox extension (Manifest V2 compatible)
-│   ├── manifest.json          # Firefox manifest
-│   ├── config/
-│   │   └── defaults.json      # Default sensitive parameter patterns & keywords
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── popup.html
-│   │   │   ├── popup.js
-│   │   │   ├── context-popup.html
-│   │   │   └── context-popup.js
-│   │   ├── scripts/
-│   │   │   ├── api-compat.js  # Firefox API compatibility layer
-│   │   │   └── background.js  # Background script for Firefox
-│   │   └── styles/
-│   │       ├── style.css
-│   │       └── tailwind.min.css
-│   └── assets/
-│       └── images/            # Icon and image assets
-├── LICENSE                    # MIT License
-└── README.md                  # This file
+│       └── images/             # Icon and image assets
+├── dist/                        # Generated — not committed
+│   ├── chrome/                  # Load unpacked from here
+│   └── firefox/                 # Load temporary add-on from here
+├── LICENSE
+└── README.md
 ```
 
 ## Core Functionalities
@@ -126,13 +132,11 @@ power-toys/
 
 - Automatically collects all links from the current webpage
 - Categorizes links by type:
-    - **JavaScript files** (.js)
-    - **JSON endpoints** (.json)
-    - **Images** (.jpeg, .jpg, .gif, .png, .svg, .webp, .ico)
-    - **Paths** (URLs without extensions)
-    - **Others** (miscellaneous resources)
+    - **Files** — anything ending in a recognizable extension (`.js`, `.json`, `.png`, `.pdf`, etc.), with a nested file-type breakdown
+    - **Paths** — URL paths with no file extension
+    - **Others** — everything else
 - Extracts links from: `<a>`, `<link>`, `<script>`, `<img>`, `<iframe>`, `<source>`, `<video>`, `<audio>` tags, and `data-url` attributes
-- Removes duplicate links and filters by domain
+- Removes duplicate links and groups results by domain
 
 ### 2. **Sensitive Data Detection**
 
@@ -148,18 +152,18 @@ power-toys/
 
 ### 3. **Encoding/Decoding Tools**
 
-Supports 5 encoding formats with bidirectional conversion:
+Supports 5 encoding formats with bidirectional conversion, backed by a single shared implementation (`src/utils/encoding.js`) used by both the popup and the context-menu quick view:
 
-- **Base64** - Encode/decode with proper handling of UTF-8 characters
-- **URL Encoding** - Escape/unescape URL-safe characters
-- **HTML Entities** - Convert special characters to HTML entities
-- **Hexadecimal** - Convert text to/from hex representation
-- **Unicode Escaping** - Convert to/from Unicode escape sequences (\\uXXXX format)
+- **Base64** — Encode/decode with proper handling of UTF-8 characters
+- **URL Encoding** — Escape/unescape URL-safe characters
+- **HTML Entities** — Convert special characters to/from HTML entities, decoded via an inert `DOMParser` document so embedded resources (e.g. tracking pixels) are never fetched
+- **Hexadecimal** — Convert text to/from hex over UTF-8 bytes, so non-Latin characters round-trip correctly
+- **Unicode Escaping** — Convert to/from Unicode escape sequences (`\uXXXX` format)
 
 ### 4. **Intelligent Search & Filtering**
 
 - Real-time search across extracted links
-- Filter by category (Links, Paths, JavaScript, JSON, Images, Others)
+- Filter by category (Links, Paths, Files, Others)
 - Filter by sensitivity level (all vs. sensitive-only)
 - Filter secrets by type (API Keys, Credentials, Endpoints, Paths, Comments, Hidden Links)
 - Live highlighting of matching results
@@ -168,33 +172,33 @@ Supports 5 encoding formats with bidirectional conversion:
 
 Automated detection of hardcoded secrets and sensitive patterns:
 
-- **API Keys & Tokens** - Regex patterns for common API key variables
-- **Credentials** - Username/password patterns in HTML/JavaScript
-- **Endpoints** - Hardcoded base URLs and hostnames
-- **Paths** - Potentially dangerous endpoints (admin, debug, backup)
-- **Comments** - Hidden URLs and paths in HTML comments
-- Uses comprehensive regex patterns from defaults.json (500+ sensitive keywords)
+- **API Keys & Tokens** — Regex patterns for common API key variables
+- **Credentials** — Username/password patterns in HTML/JavaScript
+- **Endpoints** — Hardcoded base URLs and hostnames
+- **Paths** — Potentially dangerous endpoints (admin, debug, backup)
+- **Comments** — Hidden URLs and paths in HTML comments
+- Uses comprehensive regex patterns from `defaults.json` (500+ sensitive keywords), with vendor/dev-tool noise filtered out
 
 ### 6. **Settings Management**
 
-- **Import Patterns** - Load custom regex patterns for sensitive detection
-- **Export Patterns** - Save current patterns for backup/sharing
-- **Pattern Customization** - Add custom regex patterns for your use cases
-- **Theme Selection** - Light, Dark, or System preference modes
-- **Local Storage** - Persists settings and patterns across sessions
+- **Import Patterns** — Load custom regex patterns for sensitive detection
+- **Export Patterns** — Save current patterns for backup/sharing
+- **Pattern Customization** — Add custom regex patterns for your use cases
+- **Theme Selection** — Light, Dark, or System preference modes
+- **Local Storage** — Persists settings and patterns across sessions
 
 ### 7. **User Interface Features**
 
 - **Tab-Based Navigation**:
-    - Links Tab - Extract and analyze page links
-    - Params Tab - Detect sensitive parameters (coming soon)
-    - Secrets Tab - Analyze hardcoded secrets
-    - Cipher Tab - Encoding/decoding tools
-    - Settings Tab - Configuration and pattern management
-- **Dark Mode Support** - Automatically respects system preferences
-- **Responsive Design** - Works seamlessly on different screen sizes
-- **Toast Notifications** - Non-intrusive feedback for user actions
-- **Copy-to-Clipboard** - Easy one-click copying of extracted data
+    - Links Tab — Extract and analyze page links
+    - Params Tab — Detect sensitive parameters
+    - Secrets Tab — Analyze hardcoded secrets
+    - Cipher Tab — Encoding/decoding tools
+    - Settings Tab — Configuration and pattern management
+- **Dark Mode Support** — Automatically respects system preferences
+- **Responsive Design** — Works seamlessly on different screen sizes
+- **Toast Notifications** — Non-intrusive feedback for user actions
+- **Copy-to-Clipboard** — Easy one-click copying of extracted data
 
 ### 8. **Context Menu Integration**
 
@@ -206,21 +210,23 @@ Automated detection of hardcoded secrets and sensitive patterns:
 
 | Aspect               | Chrome                                                      | Firefox                                               |
 | -------------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
-| **Manifest Version** | 3 (Latest standard)                                         | 2 (With V3 compatibility layer)                       |
+| **Manifest Version** | 3 (service worker background)                                | 3 (persistent background script)                       |
 | **Permissions**      | activeTab, scripting, storage, contextMenus, system.display | activeTab, scripting, storage, contextMenus           |
-| **Host Permissions** | `<all_urls>`                                                | `<all_urls>`                                          |
-| **Background**       | Service Worker (`background.js`)                            | Background Script (`background.js` + `api-compat.js`) |
-| **Popup**            | `popup.html` + `popup.js`                                   | `popup.html` + `popup.js`                             |
-| **Styling**          | Tailwind CSS 4.3.0 + Custom CSS                             | Tailwind CSS 4.3.0 + Custom CSS                       |
-| **Storage API**      | Chrome Storage API                                          | Firefox Storage API                                   |
-| **Node.js Version**  | v16+ (for development)                                      | v16+ (for development)                                |
+| **Host Permissions** | `<all_urls>`                                                 | `<all_urls>`                                          |
+| **Background**       | Service Worker (`background.js`)                             | Background Script (`background.js` + `api-compat.js`) |
+| **Popup**            | `popup.html` + `popup.js`                                    | `popup.html` + `popup.js`                              |
+| **Styling**          | Tailwind CSS 4 + Custom CSS                                  | Tailwind CSS 4 + Custom CSS                            |
+| **Storage API**      | Chrome Storage API                                           | Firefox Storage API (via `browser.*`)                  |
+| **Node.js Version**  | v16+ (for development)                                       | v16+ (for development)                                 |
+
+Both browser builds ship the *same* `src/` tree — the manifest is the only thing that differs, injected by `build.js` from `manifests/manifest.chrome.json` / `manifests/manifest.firefox.json`.
 
 ### Build & Development
 
-- **Build System**: `build.js` - Automated packaging for both browsers
-- **CSS Framework**: Tailwind CSS 4.3.0 with custom styling
+- **Build System**: `build.js` — generates the Tailwind stylesheet, then copies `src/` + `config/` into `dist/chrome` and `dist/firefox`, injecting the right manifest into each
+- **CSS Framework**: Tailwind CSS v4 (`@tailwindcss/cli`), theme customized via `tailwind.config.js` and pulled in through `@config` in `src/styles/input.css`
 - **Package Manager**: npm
-- **Output**: `dist/` folder with separate `chrome/` and `firefox/` builds
+- **Output**: `dist/` folder with separate `chrome/` and `firefox/` builds (git-ignored — always run `npm run build` after cloning)
 - **Configuration Files**: `manifests/manifest.chrome.json` and `manifests/manifest.firefox.json`
 
 ## Requirements
@@ -233,13 +239,25 @@ Automated detection of hardcoded secrets and sensitive patterns:
 
 ### Firefox
 
-- **Browser**: Firefox 88+
+- **Browser**: Firefox 109+ (first version with MV3 support)
 - **Platform**: Windows, macOS, or Linux
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
 
-### v0.5 (Current)
+### v0.5.3
+
+- **Fixed** link categorization mismatch between the right-click "Power Toys" page action and the popup — both now use the same Files/Paths/Others scheme that matches the UI's sub-tabs, instead of the page action silently sorting links into categories the UI couldn't display
+- **Fixed** a data-leak risk in HTML entity decoding: decoding untrusted text via `div.innerHTML` could trigger real network requests for embedded resources (e.g. a tracking pixel) even though the element was never shown; decoding now uses an inert `DOMParser` document, which fetches nothing
+- **Fixed** Hex encode/decode corrupting any non-Latin-1 character (emoji, accented letters, CJK, etc.) — it now operates over UTF-8 bytes instead of raw UTF-16 code units
+- **Fixed** the context-menu secret scanner missing the vendor/dev-tool noise filter and de-dupe pass that the popup's scanner has, so results no longer differ depending on how you opened the tool
+- **Fixed** dead code in the link collector (an unused regex and a pointless re-declaration inside the loop)
+- **Unified** all encode/decode logic into one shared module (`src/utils/encoding.js`) instead of two copies that could drift apart
+- **Hardened** the manifest by removing `web_accessible_resources` — nothing in the extension actually needed to expose `context-popup.html` or `config/defaults.json` to arbitrary web pages; both are only ever opened/fetched from the extension's own background/popup context
+- **Fixed** the Tailwind build: Tailwind v4 moved its CLI to the separate `@tailwindcss/cli` package, and the custom theme in `tailwind.config.js` wasn't actually being loaded (v4 requires an explicit `@config` directive) — both are now correct
+- **Fixed** documentation drift: the README's install instructions, project structure, and the Firefox manifest-version claim didn't match the real unified-build architecture; the Firefox badge also linked to the Chrome Web Store by mistake
+
+### v0.5.2
 
 - **Refactored popup & context menu styles** with Tailwind CSS for consistent, modern design
 - **Centralized design tokens** in theme layer for single source of truth (SSoT) architecture
