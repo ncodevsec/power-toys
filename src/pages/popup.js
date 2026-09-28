@@ -2094,7 +2094,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		window
 			.getBrowserAPI()
 			.scripting.executeScript(
-				{ target: { tabId: tab.id }, function: collectAllLinksInPage },
+				{ target: { tabId: tab.id }, func: collectAllLinksInPage },
 				(results) => {
 					if (results?.[0]) {
 						allLinksGlobal = results[0].result;
@@ -2109,7 +2109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		window
 			.getBrowserAPI()
 			.scripting.executeScript(
-				{ target: { tabId: tab.id }, function: collectSecretsFromPage },
+				{ target: { tabId: tab.id }, func: collectSecretsFromPage },
 				(results) => {
 					if (results?.[0]) {
 						allSecretsGlobal = results[0].result;

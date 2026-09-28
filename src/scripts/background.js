@@ -380,11 +380,11 @@ getBrowserAPI().contextMenus.onClicked.addListener(async (info, tab) => {
 		const [linksResult, secretsResult] = await Promise.allSettled([
 			getBrowserAPI().scripting.executeScript({
 				target: { tabId: tab.id },
-				function: collectAllLinksInPage,
+				func: collectAllLinksInPage,
 			}),
 			getBrowserAPI().scripting.executeScript({
 				target: { tabId: tab.id },
-				function: collectSecretsMinimal,
+				func: collectSecretsMinimal,
 			}),
 		]);
 
@@ -426,41 +426,41 @@ getBrowserAPI().contextMenus.onClicked.addListener(async (info, tab) => {
 
 	const methodData = METHOD_MAP[menuItemId];
 	if (methodData && selectionText) {
+		const api = getBrowserAPI();
 		contextMenuData = {
 			selectedText: selectionText,
 			method: methodData.method,
 			operation: methodData.op,
 		};
+		// Persist so the data survives Firefox background-page unloads.
+		api.storage.local.set({ contextMenuData });
 
-		const isChrome = typeof chrome !== "undefined" && chrome.runtime;
+		const POPUP_W = 560;
+		const POPUP_H = 600; // includes the window title bar
+		const windowOptions = {
+			url: api.runtime.getURL("src/pages/context-popup.html"),
+			type: "popup",
+			width: POPUP_W,
+			height: POPUP_H,
+		};
 
-		if (isChrome && getBrowserAPI().system?.display) {
-			// Chrome: Create window with bottom-right positioning
-			getBrowserAPI().system.display.getInfo((displays) => {
-				const windowOptions = {
-					url: getBrowserAPI().runtime.getURL(
-						"src/pages/context-popup.html",
-					),
-					type: "popup",
-					width: 500,
-					height: 500,
-				};
-				// Position at bottom-right with padding
-				if (displays.length > 0) {
-					const { left, top, width, height } = displays[0].bounds;
-					windowOptions.left = Math.max(0, left + width - 520);
-					windowOptions.top = Math.max(0, top + height - 520);
+		if (api.system?.display) {
+			// Chrome: place the popup window at the bottom-right of the screen.
+			api.system.display.getInfo((displays) => {
+				if (displays?.length > 0) {
+					const { left, top, width, height } =
+						displays[0].workArea || displays[0].bounds;
+					windowOptions.left = Math.max(
+						0,
+						left + width - POPUP_W - 20,
+					);
+					windowOptions.top = Math.max(0, top + height - POPUP_H - 20);
 				}
-				getBrowserAPI().windows.create(windowOptions);
+				api.windows.create(windowOptions);
 			});
 		} else {
-			// Firefox: Create tab instead (doesn't support windows API)
-			getBrowserAPI().tabs.create({
-				url: getBrowserAPI().runtime.getURL(
-					"src/pages/context-popup.html",
-				),
-				active: true,
-			});
+			// Firefox: no system.display, but windows.create({type:"popup"}) works.
+			api.windows.create(windowOptions);
 		}
 	}
 });
@@ -468,17 +468,20 @@ getBrowserAPI().contextMenus.onClicked.addListener(async (info, tab) => {
 // ─── Message handler — validate sender origin ─────────────────────────────────
 getBrowserAPI().runtime.onMessage.addListener(
 	(request, sender, sendResponse) => {
-		// Only respond to messages from our own extension pages
-		const isChrome = typeof chrome !== "undefined" && chrome.runtime;
-		const expectedOrigin = isChrome
-			? `chrome-extension://${getBrowserAPI().runtime.id}`
-			: `moz-extension://${getBrowserAPI().runtime.id}`;
-		if (sender.origin && sender.origin !== expectedOrigin) {
-			return false;
-		}
+		// Only accept messages from our own extension (works in Chrome and
+		// Firefox; sender.origin differs between them because Firefox uses an
+		// internal UUID rather than the add-on id in moz-extension:// URLs).
+		if (sender.id !== getBrowserAPI().runtime.id) return false;
+
 		if (request?.action === "getContextData") {
-			sendResponse(contextMenuData);
-			return false;
+			if (contextMenuData.selectedText) {
+				sendResponse(contextMenuData);
+				return false;
+			}
+			getBrowserAPI().storage.local.get(["contextMenuData"], (r) =>
+				sendResponse(r.contextMenuData || {}),
+			);
+			return true; // async response
 		}
 
 		// Handle bulk URL opener actions

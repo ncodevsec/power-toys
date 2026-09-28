@@ -156,6 +156,12 @@
 		margin: 0 auto;
 	}
 
+	/* Context-menu popup window: fill the window instead of the fixed 650px */
+	body.context-page:not(.full-tab) {
+		width: 100%;
+		max-width: none;
+	}
+
 	/* Night Mode Gradient */
 	html.dark body {
 		background:
