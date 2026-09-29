@@ -12,4 +12,4 @@ export const SensitiveToggle = ({ active, onClick }) => (
 );
 
 export const ResultCount = ({ show, count }) =>
-	show ? <p className="px-1 text-xs font-bold text-brand">Found {count} {count === 1 ? "item" : "items"}</p> : null;
+	show ? <p className="px-1 text-xs font-bold text-muted">Found {count} {count === 1 ? "item" : "items"}</p> : null;

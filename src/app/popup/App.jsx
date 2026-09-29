@@ -25,10 +25,15 @@ const TABS = [
 
 export default function App({ fullTab = false }) {
 	const [theme, setTheme] = useTheme();
+	// `tab` always holds the last-selected content tab; `showSettings` is a
+	// separate overlay-like toggle so the gear button can open AND close
+	// settings, and returning from it lands back on whichever tab was active.
 	const [tab, setTab] = useState("links");
+	const [showSettings, setShowSettings] = useState(false);
 	const { status, links, secrets, domain } = usePageData({ fullTab });
 
 	const openFullTab = () => openTab(getURL(`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`));
+	const selectTab = (id) => { setShowSettings(false); setTab(id); };
 
 	return (
 		<div className={fullTab ? "mx-auto max-w-[880px]" : "w-[640px]"}>
@@ -37,27 +42,34 @@ export default function App({ fullTab = false }) {
 				subtitle={domain || "Bug hunting toolkit"}
 				actions={<>
 					<ThemeSwitch value={theme} onChange={setTheme} />
-					<SettingsButton active={tab === "settings"} onClick={() => setTab("settings")} />
+					<SettingsButton active={showSettings} onClick={() => setShowSettings((v) => !v)} />
 					{!fullTab && <FullTabButton onClick={openFullTab} />}
 				</>}
 			/>
 
-			<div className="px-4 pt-4">
-				<Tabs items={TABS} value={tab === "settings" ? null : tab} onChange={setTab} />
-			</div>
+			{!showSettings && (
+				<div className="px-4 pt-4">
+					<Tabs items={TABS} value={tab} onChange={selectTab} />
+				</div>
+			)}
 
 			<main className="min-h-[300px] px-4 py-4">
-				{status === "loading" && tab !== "settings" && <Spinner />}
-				{status === "unavailable" && tab !== "settings" && <EmptyState icon="shield" title="Unavailable on this page" hint="Browser and extension pages can't be inspected." />}
-				{status === "empty" && tab !== "settings" && <EmptyState icon="inbox" title="No links found" hint="Try opening this from the extension's popup instead." />}
-				{(status === "ready" || tab === "bulk" || tab === "cipher" || tab === "settings") && (
+				{showSettings ? (
+					<SettingsTab />
+				) : (
 					<>
-						{tab === "links" && <LinksTab links={links} domain={domain} />}
-						{tab === "params" && <ParamsTab links={links} />}
-						{tab === "secrets" && <SecretsTab secrets={secrets} />}
-						{tab === "bulk" && <BulkTab />}
-						{tab === "cipher" && <CipherTab />}
-						{tab === "settings" && <SettingsTab />}
+						{status === "loading" && <Spinner />}
+						{status === "unavailable" && <EmptyState icon="shield" title="Unavailable on this page" hint="Browser and extension pages can't be inspected." />}
+						{status === "empty" && <EmptyState icon="inbox" title="No links found" hint="Try opening this from the extension's popup instead." />}
+						{(status === "ready" || tab === "bulk" || tab === "cipher") && (
+							<>
+								{tab === "links" && <LinksTab links={links} domain={domain} />}
+								{tab === "params" && <ParamsTab links={links} />}
+								{tab === "secrets" && <SecretsTab secrets={secrets} />}
+								{tab === "bulk" && <BulkTab />}
+								{tab === "cipher" && <CipherTab />}
+							</>
+						)}
 					</>
 				)}
 			</main>

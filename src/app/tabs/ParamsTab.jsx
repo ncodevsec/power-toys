@@ -78,7 +78,7 @@ export default function ParamsTab({ links }) {
 								<li key={name} className="space-y-1.5 px-4 py-2.5 text-sm">
 									<div className="flex items-center gap-2.5">
 										<span className="size-1.5 rounded-full bg-brand" />
-										<span className="font-semibold text-brand">{name}</span>
+										<span className="font-semibold text-fg">{name}</span>
 										{isSensitiveParam(name, compiled) && <Badge tone="danger">Sensitive</Badge>}
 									</div>
 									<div className="flex flex-wrap gap-1.5 pl-4">

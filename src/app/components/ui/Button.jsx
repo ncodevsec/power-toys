@@ -6,7 +6,6 @@ const VARIANTS = {
 	soft: "bg-brand-soft text-brand-ink hover:bg-brand/20",
 	outline: "border border-line bg-surface text-fg hover:border-brand/50 hover:text-brand",
 	ghost: "text-muted hover:bg-surface-2 hover:text-fg",
-	glass: "bg-white/15 text-white hover:bg-white/25",
 };
 const SIZES = {
 	xs: "h-7 px-2.5 text-xs gap-1",
@@ -33,7 +32,7 @@ export function Button({ variant = "outline", size = "sm", icon, active, classNa
 	);
 }
 
-export function IconButton({ icon, label, variant = "glass", className, ...props }) {
+export function IconButton({ icon, label, variant = "outline", className, ...props }) {
 	return (
 		<Button variant={variant} title={label} aria-label={label} className={cx("!px-0 w-9 !h-9 !rounded-xl", className)} {...props}>
 			<Icon name={icon} size={16} />

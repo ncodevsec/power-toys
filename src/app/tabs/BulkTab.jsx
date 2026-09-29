@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Field, Icon, Textarea } from "../components/ui/index.js";
+import { Button, Card, Field, Textarea } from "../components/ui/index.js";
 import { sendMessage } from "../lib/browser.js";
 import { extractUrls, groupUrlsByHost } from "../lib/links.js";
 import { cx } from "../lib/utils.js";
@@ -10,6 +10,31 @@ const MODES = [
 	{ id: "newWindow", title: "One window", hint: "All URLs in a single new window" },
 	{ id: "eachDomain", title: "Window per domain", hint: "Group URLs by hostname" },
 ];
+
+/** A properly-styled radio row (indicator + title + hint), used as a
+ * cleaner, more legible replacement for native radio inputs. */
+function RadioRow({ title, hint, selected, onSelect }) {
+	return (
+		<button
+			type="button"
+			role="radio"
+			aria-checked={selected}
+			onClick={onSelect}
+			className={cx(
+				"flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition",
+				selected ? "border-brand bg-brand-soft" : "border-line hover:border-brand/40",
+			)}
+		>
+			<span className={cx("mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2 transition", selected ? "border-brand" : "border-line")}>
+				{selected && <span className="size-2.5 rounded-full bg-brand" />}
+			</span>
+			<span className="min-w-0">
+				<span className="block text-sm font-bold">{title}</span>
+				<span className="block text-xs text-muted">{hint}</span>
+			</span>
+		</button>
+	);
+}
 
 export default function BulkTab() {
 	const toast = useToast();
@@ -46,19 +71,15 @@ export default function BulkTab() {
 				</Field>
 
 				<Field label="Opening options">
-					<div className="grid grid-cols-3 gap-2">
+					<div role="radiogroup" aria-label="Opening options" className="space-y-2">
 						{MODES.map((m) => (
-							<button key={m.id} onClick={() => setMode(m.id)} aria-pressed={mode === m.id}
-								className={cx("rounded-2xl border p-3 text-left transition", mode === m.id ? "border-brand bg-brand-soft ring-4 ring-brand/10" : "border-line hover:border-brand/40")}>
-								<span className="flex items-center gap-1.5 text-sm font-bold"><Icon name={mode === m.id ? "check" : "external"} size={14} className="text-brand" />{m.title}</span>
-								<span className="mt-1 block text-xs text-muted">{m.hint}</span>
-							</button>
+							<RadioRow key={m.id} title={m.title} hint={m.hint} selected={mode === m.id} onSelect={() => setMode(m.id)} />
 						))}
 					</div>
 				</Field>
 
 				<div className="flex items-center justify-between gap-3">
-					<p className="text-xs font-semibold text-brand">{summary}</p>
+					<p className="text-xs font-semibold text-muted">{summary}</p>
 					<Button variant="primary" size="md" icon="external" onClick={open}>Open URLs</Button>
 				</div>
 			</div>

@@ -63,7 +63,7 @@ export default function LinksTab({ links, domain }) {
 						{group.map((l) => (
 							<li key={l.fullUrl} className="flex items-center gap-2.5 px-4 py-2 text-sm">
 								<span className="size-1.5 shrink-0 rounded-full bg-brand" />
-								<a href={l.fullUrl} target="_blank" rel="noopener noreferrer" title={l.fullUrl} className="min-w-0 truncate font-medium text-brand hover:underline">{l.path}</a>
+								<a href={l.fullUrl} target="_blank" rel="noopener noreferrer" title={l.fullUrl} className="min-w-0 truncate font-medium text-fg hover:underline">{l.path}</a>
 								{isSensitiveLink(l.fullUrl, compiled) && <Badge tone="danger">Sensitive</Badge>}
 							</li>
 						))}

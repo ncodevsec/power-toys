@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.6.2-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.6.3-informational)](package.json)
 
 ---
 
@@ -255,6 +255,14 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.6.3
+
+- **Reduced overall red usage**: link paths, parameter names, and secret/code values are now shown in the normal foreground color instead of red — only the small bullet dot before each item stays red. Plain count badges (link counts, version number, repeat counter) switched from a red-tinted chip to a neutral gray one; "Sensitive" flags are still solid red since that's a real warning signal
+- **Removed the red radial-glow backdrop from the preview's main content area** (it remains on the header, where it was intended)
+- **Settings no longer shows the Links/Params/Secrets/Bulk Opener/Cipher tab bar** above it. The header's gear icon is now a proper on/off toggle, so clicking it again (or navigating away) returns you to whichever tab you were on
+- **Redesigned the Bulk Opener "Opening options" picker** as a proper radio-row list (indicator circle, bold title, hint) instead of the cramped 3-column icon tiles
+- **Fixed a light-theme contrast bug in the context-menu window header**: the "encode"/"decode" badge and the full-screen button were rendered in hardcoded white, which disappeared against the light theme's pale header background. Both now use theme-adaptive colors that stay legible in light and dark
 
 ### v0.6.2
 

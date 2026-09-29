@@ -9,7 +9,7 @@ export const Spinner = () => (
 
 export const EmptyState = ({ icon = "inbox", title, hint }) => (
 	<div className="flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-		<div className="mb-3 grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand-ink"><Icon name={icon} size={22} /></div>
+		<div className="mb-3 grid size-12 place-items-center rounded-2xl bg-surface-2 text-muted"><Icon name={icon} size={22} /></div>
 		<p className="text-sm font-bold">{title}</p>
 		{hint && <p className="mt-1 max-w-xs text-xs text-muted">{hint}</p>}
 	</div>
