@@ -24,6 +24,9 @@ const PATHS = {
 	zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />,
 	chevron: <path d="m6 9 6 6 6-6" />,
 	eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
+	star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z" />,
+	"message-circle": <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
+	"alert-circle": <><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>,
 };
 
 export function Icon({ name, size = 16, className = "", strokeWidth = 2 }) {
@@ -42,6 +45,20 @@ export function Icon({ name, size = 16, className = "", strokeWidth = 2 }) {
 			aria-hidden="true"
 		>
 			{PATHS[name]}
+		</svg>
+	);
+}
+
+/**
+ * Filled GitHub mark (the standard open, widely-reused minimal "octocat"
+ * silhouette shipped in MIT-licensed icon sets such as Bootstrap Icons).
+ * Rendered separately from Icon because it's a solid glyph, not a stroke
+ * icon like the rest of the set.
+ */
+export function GithubGlyph({ size = 16, className = "" }) {
+	return (
+		<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={`shrink-0 ${className}`} aria-hidden="true">
+			<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
 		</svg>
 	);
 }

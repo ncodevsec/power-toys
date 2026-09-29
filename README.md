@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.6.1-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.6.2-informational)](package.json)
 
 ---
 
@@ -255,6 +255,14 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.6.2
+
+- **Widened the extension popup** (420px → 640px) so all five tabs (Links, Params, Secrets, Bulk Opener, Cipher) fit the tab bar without wrapping or horizontal scrolling
+- **Moved Settings out of the tab bar** into a gear icon in the header, next to the theme switcher — freeing up room in the tab bar and matching where settings live in most modern apps
+- **Redesigned the Settings page** as a two-pane layout: a left-hand section nav (General / URL Patterns / Parameter Keywords) and a content panel on the right, styled with macOS/iOS-style list rows for General (app info, GitHub link, export/import) and a live pattern/keyword count badge on the two editor sections
+- **Redesigned the footer**: added a row of icon-only circular links (GitHub profile, star the repo, report an issue, join the discussion) above the version line — all real, already-documented destinations from this README, not placeholder social accounts
+- **Removed the header's bottom-corner rounding** — it's now a plain-edged bar
 
 ### v0.6.1
 

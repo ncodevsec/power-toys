@@ -1,4 +1,4 @@
-export { Icon } from "./Icon.jsx";
+export { Icon, GithubGlyph } from "./Icon.jsx";
 export { Button, IconButton } from "./Button.jsx";
 export { Card, CardHeader } from "./Card.jsx";
 export { Badge, Code } from "./Badge.jsx";

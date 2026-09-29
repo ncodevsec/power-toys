@@ -28,7 +28,7 @@ export function ThemeSwitch({ value, onChange }) {
  */
 export function AppHeader({ title, accent, subtitle, actions, className }) {
 	return (
-		<header className={cx("relative overflow-hidden rounded-b-2xl border-b border-line bg-surface-2 px-5 pb-4 pt-4", className)}>
+		<header className={cx("relative overflow-hidden border-b border-line bg-surface-2 px-5 pb-4 pt-4", className)}>
 			<div className="pointer-events-none absolute -right-12 -top-20 size-56 rounded-full bg-brand/20 blur-3xl" />
 			<div className="relative flex items-center justify-between gap-3">
 				<div className="flex min-w-0 items-center gap-3">
@@ -48,3 +48,4 @@ export function AppHeader({ title, accent, subtitle, actions, className }) {
 }
 
 export const FullTabButton = ({ onClick }) => <IconButton icon="maximize" label="Open in full tab" variant="outline" onClick={onClick} />;
+export const SettingsButton = ({ active, onClick }) => <IconButton icon="settings" label="Settings" variant="outline" active={active} onClick={onClick} />;

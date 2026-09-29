@@ -3,7 +3,7 @@ import { Badge, Icon } from "../src/app/components/ui/index.js";
 import { cx } from "../src/app/lib/utils.js";
 
 const VIEWS = [
-	{ id: "popup", label: "Extension popup", hint: "420px — click the toolbar icon" },
+	{ id: "popup", label: "Extension popup", hint: "640px — click the toolbar icon" },
 	{ id: "fulltab", label: "Full tab view", hint: "Opened via the ⤢ button" },
 	{ id: "context", label: "Context-menu window", hint: "Right-click → Power Toys → Encode/Decode" },
 ];
