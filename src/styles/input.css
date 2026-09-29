@@ -3,43 +3,46 @@
 @source "../pages";
 @source "../../preview";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
 /* ─── Design tokens ─────────────────────────────────────────────────────────
-   Brand: crimson #bd2828 (same accent as the NihonGo site). Every surface
-   colour is a CSS variable so light/dark is a single class swap on <html>. */
+   Dark, near-black is the primary theme (ChatGPT-style contrast): true
+   neutral charcoal/black surfaces with a single vivid red accent used for
+   buttons, active states, and key highlights — never tinting the page
+   background itself. `:root` holds the dark palette directly since it's the
+   default; `.light` overrides it for people who switch to the light theme. */
 :root {
-	--bg: #fbf5f5;
-	--surface: #ffffff;
-	--surface-2: #f7ecec;
-	--line: #eedcdc;
-	--fg: #2b1416;
-	--fg-muted: #6e5155;
-	--fg-subtle: #a08589;
-	--brand: #bd2828;
-	--brand-hover: #a11f1f;
-	--brand-soft: #fdeaea;
-	--brand-ink: #9c1f1f;
-	--ok: #15803d;
-	--warn: #b45309;
-	color-scheme: light;
+	--bg: #0c0c0d;
+	--surface: #161617;
+	--surface-2: #1f1f21;
+	--line: #2c2c2f;
+	--fg: #f5f5f6;
+	--fg-muted: #a3a3a8;
+	--fg-subtle: #6b6b70;
+	--brand: #ef4141;
+	--brand-hover: #dc2626;
+	--brand-soft: rgba(239, 65, 65, 0.16);
+	--brand-ink: #ff8a8a;
+	--ok: #22c55e;
+	--warn: #f59e0b;
+	color-scheme: dark;
 }
 
-.dark {
-	--bg: #150a0b;
-	--surface: #211213;
-	--surface-2: #2c181a;
-	--line: #402628;
-	--fg: #fbeeee;
-	--fg-muted: #d3b3b6;
-	--fg-subtle: #9c7c80;
-	--brand: #d13535;
-	--brand-hover: #e14c4c;
-	--brand-soft: rgba(225, 76, 76, 0.14);
-	--brand-ink: #f5a3a3;
-	--ok: #4ade80;
-	--warn: #fbbf24;
-	color-scheme: dark;
+.light {
+	--bg: #f7f7f8;
+	--surface: #ffffff;
+	--surface-2: #f0f0f2;
+	--line: #e3e3e7;
+	--fg: #18181b;
+	--fg-muted: #52525b;
+	--fg-subtle: #9a9aa2;
+	--brand: #dc2626;
+	--brand-hover: #b91c1c;
+	--brand-soft: #fee2e2;
+	--brand-ink: #b91c1c;
+	--ok: #16a34a;
+	--warn: #b45309;
+	color-scheme: light;
 }
 
 @theme inline {
@@ -56,15 +59,11 @@
 	--color-brand-ink: var(--brand-ink);
 	--color-ok: var(--ok);
 	--color-warn: var(--warn);
-	--color-crimson-700: #8f1a1a;
-	--color-crimson-800: #6f1414;
-	--color-crimson-900: #4d0d0d;
 	--font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	--shadow-card: 0 1px 2px rgba(80, 20, 20, 0.05),
-		0 6px 20px -8px rgba(80, 20, 20, 0.12);
-	--shadow-pop: 0 20px 45px -12px rgba(60, 10, 10, 0.35);
+	--shadow-card: 0 1px 2px rgba(0, 0, 0, 0.16), 0 6px 20px -8px rgba(0, 0, 0, 0.3);
+	--shadow-pop: 0 24px 50px -12px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -78,6 +77,7 @@
 		color: var(--fg);
 		-webkit-font-smoothing: antialiased;
 	}
+
 	::selection {
 		background: color-mix(in srgb, var(--brand) 25%, transparent);
 	}

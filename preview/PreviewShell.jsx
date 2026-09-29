@@ -11,7 +11,7 @@ const VIEWS = [
 export function PreviewShell({ children }) {
 	const [view, setView] = useState("popup");
 	return (
-		<div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fbe4e4,_var(--bg))] pb-16 dark:bg-[radial-gradient(circle_at_top,_#2c1214,_var(--bg))]">
+		<div className="min-h-screen bg-[radial-gradient(circle_at_top,_#241010,_var(--bg))] pb-16 light:bg-[radial-gradient(circle_at_top,_#fbe4e4,_var(--bg))]">
 			<div className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">
 				<div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-3">
 					<div className="flex items-center gap-2.5">

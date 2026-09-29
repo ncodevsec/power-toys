@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.6.0-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.6.1-informational)](package.json)
 
 ---
 
@@ -255,6 +255,13 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.6.1
+
+- **Flipped the default theme to a black-and-red, high-contrast look** (the v0.6.0 palette defaulted to a light, pink-tinted surface and only went dark if the OS was set to dark mode). Near-black is now the baseline theme regardless of OS setting — `#0c0c0d` page background, layered charcoal surfaces (`#16` → `#1f`), a single vivid red accent (`#ef4141`) used consistently for primary buttons (red background, white text), active tabs, badges, and focus states. Explicit Light/Dark/System theme switching still works; "Light" is now the opt-in override instead of the default
+- Replaced the colorful crimson gradient hero header with a flat, near-black app bar (a soft red glow accent in the corner, a solid red icon chip) — closer to the flat, minimal chrome of apps like ChatGPT than a colored banner
+- Restyled toast notifications as a neutral dark card with a small colored status dot, instead of a solid red/green block
+- Neutralized card/modal shadow colors to plain black (the previous shadows were tinted dark red, which was part of what made the light theme look "reddish" overall)
 
 ### v0.6.0
 
