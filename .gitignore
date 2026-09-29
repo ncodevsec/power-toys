@@ -32,3 +32,8 @@ yarn-error.log*
 .env.local
 .env.*.local
 src/styles/main.css
+
+# Generated bundles (esbuild output — rebuilt by `npm run build` / `npm run preview`)
+src/pages/*.bundle.js
+src/scripts/background.bundle.js
+preview/preview.bundle.js

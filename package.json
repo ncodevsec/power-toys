@@ -1,18 +1,15 @@
 {
 	"name": "power-toys",
-	"version": "0.5.3",
+	"version": "0.6.0",
 	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
 	"main": "build.js",
-	"directories": {
-		"doc": "docs"
-	},
 	"scripts": {
 		"build": "node build.js",
 		"build:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/main.css --minify",
-		"build:all": "concurrently \"npm run build\" \"npm run build:css\"",
+		"preview": "node build.js --preview",
+		"preview:watch": "node build.js --preview --watch",
 		"watch": "node build.js --watch",
-		"watch:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/main.css --watch",
-		"watch:all": "concurrently \"npm run watch\" \"npm run watch:css\""
+		"watch:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/main.css --watch"
 	},
 	"keywords": [
 		"security",
@@ -32,9 +29,12 @@
 	"homepage": "https://github.com/ncodevsec/power-toys",
 	"dependencies": {
 		"@tailwindcss/cli": "^4.3.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"tailwindcss": "^4.3.0"
 	},
 	"devDependencies": {
-		"concurrently": "^8.2.0"
+		"esbuild": "^0.28.2",
+		"jsdom": "^30.1.1"
 	}
 }

@@ -1,9 +1,8 @@
 /**
  * Shared Encoding/Decoding Utilities
  *
- * Single source of truth for every encode/decode transform used by both
- * the main popup (src/pages/popup.js) and the context-menu quick view
- * (src/pages/context-popup.js). Load this file *before* the page script.
+ * Single source of truth for every encode/decode transform, imported by the
+ * popup Cipher tab and the context-menu quick view.
  *
  * Security note (HTML entity decode):
  * The previous implementation decoded HTML entities by assigning the
@@ -16,9 +15,7 @@
  * to a third party on every decode. `DOMParser` produces a document with
  * no browsing context, so referenced resources are never fetched.
  */
-"use strict";
-
-window.PowerToysEncoding = {
+export const encoding = {
 	base64: {
 		encode: (t) => btoa(unescape(encodeURIComponent(t))),
 		decode: (t) => decodeURIComponent(escape(atob(t))),

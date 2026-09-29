@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Power Toys",
-	"version": "0.5.3",
+	"version": "0.6.0",
 	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
 	"permissions": [
 		"activeTab",
@@ -12,7 +12,9 @@
 		"clipboardRead",
 		"clipboardWrite"
 	],
-	"host_permissions": ["<all_urls>"],
+	"host_permissions": [
+		"<all_urls>"
+	],
 	"background": {
 		"service_worker": "src/scripts/background.js"
 	},

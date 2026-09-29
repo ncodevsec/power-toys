@@ -3,16 +3,15 @@
 /**
  * Build Script for Power Toys Extension
  *
- * Builds the extension for both Chrome and Firefox from a unified source directory.
- * - Cleans the dist/ folder
- * - Generates Tailwind CSS
- * - Copies unified src/ to both browser folders
- * - Injects browser-specific manifests
+ * Builds the extension for both Chrome and Firefox from a unified source
+ * tree (src/), bundling the React UI and the background script with esbuild,
+ * then copying static assets and stamping each output with its own
+ * browser-specific manifest from manifests/.
  *
  * Usage: npm run build
  * Options:
  *   --clean-only    Only clean dist/ folder without building
- *   --watch         Watch mode (future enhancement)
+ *   --watch         Rebuild automatically on source changes
  */
 
 "use strict";
@@ -20,6 +19,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const esbuild = require("esbuild");
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -32,286 +32,212 @@ const CHROME_DIST = path.join(DIST_DIR, "chrome");
 const FIREFOX_DIST = path.join(DIST_DIR, "firefox");
 
 const BROWSERS = {
-	chrome: {
-		dist: CHROME_DIST,
-		manifest: path.join(MANIFESTS_DIR, "manifest.chrome.json"),
-	},
-	firefox: {
-		dist: FIREFOX_DIST,
-		manifest: path.join(MANIFESTS_DIR, "manifest.firefox.json"),
-	},
+	chrome: { dist: CHROME_DIST, manifest: path.join(MANIFESTS_DIR, "manifest.chrome.json") },
+	firefox: { dist: FIREFOX_DIST, manifest: path.join(MANIFESTS_DIR, "manifest.firefox.json") },
 };
+
+// Entry points bundled by esbuild. Each becomes a single self-contained
+// (IIFE) file, so no ES module support is required at runtime — this is
+// what lets the background script import shared helpers from src/app/lib
+// without Chrome/Firefox needing `"type": "module"` wiring.
+const BUNDLES = [
+	{ in: path.join(SRC_DIR, "app", "popup", "main.jsx"), out: path.join(SRC_DIR, "pages", "popup.bundle.js") },
+	{ in: path.join(SRC_DIR, "app", "context", "main.jsx"), out: path.join(SRC_DIR, "pages", "context-popup.bundle.js") },
+	{ in: path.join(SRC_DIR, "scripts", "background.js"), out: path.join(SRC_DIR, "scripts", "background.bundle.js") },
+];
+
+// The design/QA preview (static fixture data, no real extension APIs) is
+// only ever built on demand via `npm run preview`, not part of `npm run build`.
+const PREVIEW_BUNDLE = { in: path.join(ROOT_DIR, "preview", "main.jsx"), out: path.join(ROOT_DIR, "preview", "preview.bundle.js") };
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
-/**
- * Log with timestamp
- */
 const log = (message, type = "info") => {
 	const timestamp = new Date().toLocaleTimeString();
-	const prefix =
-		{
-			info: "[INFO]",
-			success: "[✓]",
-			error: "[✗]",
-			warn: "[!]",
-		}[type] || "[LOG]";
-
+	const prefix = { info: "[INFO]", success: "[✓]", error: "[✗]", warn: "[!]" }[type] || "[LOG]";
 	console.log(`${timestamp} ${prefix} ${message}`);
 };
 
-/**
- * Recursively delete a directory
- */
 const removeDir = (dir) => {
-	if (fs.existsSync(dir)) {
-		fs.readdirSync(dir).forEach((file) => {
-			const filePath = path.join(dir, file);
-			if (fs.lstatSync(filePath).isDirectory()) {
-				removeDir(filePath);
-			} else {
-				fs.unlinkSync(filePath);
-			}
-		});
-		fs.rmdirSync(dir);
-	}
+	if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
 };
 
-/**
- * Recursively copy directory
- */
-const copyDir = (src, dest) => {
-	if (!fs.existsSync(dest)) {
-		fs.mkdirSync(dest, { recursive: true });
-	}
-
-	const files = fs.readdirSync(src);
-	files.forEach((file) => {
+const copyDir = (src, dest, { skip = () => false } = {}) => {
+	if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+	for (const file of fs.readdirSync(src)) {
 		const srcFile = path.join(src, file);
 		const destFile = path.join(dest, file);
-
-		if (fs.lstatSync(srcFile).isDirectory()) {
-			copyDir(srcFile, destFile);
-		} else {
-			fs.copyFileSync(srcFile, destFile);
-		}
-	});
+		if (skip(srcFile)) continue;
+		if (fs.lstatSync(srcFile).isDirectory()) copyDir(srcFile, destFile, { skip });
+		else fs.copyFileSync(srcFile, destFile);
+	}
 };
 
 /**
- * Copy file if it exists
- */
-const copyFile = (src, dest) => {
-	if (!fs.existsSync(src)) {
-		return false;
-	}
-	const destDir = path.dirname(dest);
-	if (!fs.existsSync(destDir)) {
-		fs.mkdirSync(destDir, { recursive: true });
-	}
-	fs.copyFileSync(src, dest);
-	return true;
-};
-
-/**
- * Generate Tailwind CSS
+ * Generate Tailwind CSS.
  *
- * NOTE: Tailwind CSS v4 split its CLI out into the separate
- * `@tailwindcss/cli` package (the core `tailwindcss` package no longer
- * ships a bin). We invoke it by package name (`npx @tailwindcss/cli`)
- * rather than by guessing a bin name, so this keeps working regardless
- * of how a given Tailwind version wires up its binary.
- *
- * We also require `tailwind.config.js` to exist (see below) because the
- * theme customizations that give this extension its look (colors, radii,
- * spacing) live there and are pulled in explicitly via `@config` in
- * src/styles/input.css.
+ * Tailwind v4 ships its CLI as the separate `@tailwindcss/cli` package (the
+ * core `tailwindcss` package no longer has a bin), so it's invoked by
+ * package name rather than a guessed bin name.
  */
 const generateTailwindCSS = () => {
-	try {
-		log("Generating Tailwind CSS...");
-
-		const tailwindConfigPath = path.join(ROOT_DIR, "tailwind.config.js");
-		if (!fs.existsSync(tailwindConfigPath)) {
-			log(
-				"tailwind.config.js not found, skipping CSS generation",
-				"warn",
-			);
-			return;
-		}
-
-		const inputCSS = path.join(SRC_DIR, "styles", "input.css");
-		const outputCSS = path.join(SRC_DIR, "styles", "main.css");
-
-		// Create input.css if it doesn't exist
-		if (!fs.existsSync(inputCSS)) {
-			fs.mkdirSync(path.dirname(inputCSS), { recursive: true });
-			fs.writeFileSync(
-				inputCSS,
-				'@import "tailwindcss";\n@config "../../tailwind.config.js";\n',
-			);
-		}
-
-		// Run the Tailwind v4 CLI (@tailwindcss/cli), invoked by package
-		// name so it resolves correctly regardless of local bin naming.
-		const command = `npx @tailwindcss/cli -i "${inputCSS}" -o "${outputCSS}" --minify`;
-		execSync(command, { stdio: "inherit", cwd: ROOT_DIR });
-
-		log("Tailwind CSS generated successfully", "success");
-	} catch (error) {
-		log(`Error generating Tailwind CSS: ${error.message}`, "error");
-		// Don't fail build - continue with existing CSS or fallback
-	}
+	log("Generating Tailwind CSS...");
+	const inputCSS = path.join(SRC_DIR, "styles", "input.css");
+	const outputCSS = path.join(SRC_DIR, "styles", "main.css");
+	execSync(`npx @tailwindcss/cli -i "${inputCSS}" -o "${outputCSS}" --minify`, { stdio: "inherit", cwd: ROOT_DIR });
+	log("Tailwind CSS generated successfully", "success");
 };
 
 /**
- * Build for a specific browser
+ * Bundle the React app(s) and the background script with esbuild.
+ * JSX runs through esbuild's automatic React 17+ transform, so component
+ * files don't need `import React from "react"`.
+ */
+const bundleJavaScript = async ({ watch = false, bundles = BUNDLES } = {}) => {
+	log("Bundling JavaScript (esbuild)...");
+	const contexts = [];
+	for (const bundle of bundles) {
+		const options = {
+			entryPoints: [bundle.in],
+			outfile: bundle.out,
+			bundle: true,
+			format: "iife",
+			target: ["chrome100", "firefox109"],
+			jsx: "automatic",
+			jsxImportSource: "react",
+			loader: { ".js": "jsx" },
+			minify: true,
+			define: { "process.env.NODE_ENV": '"production"' },
+			logLevel: "warning",
+		};
+		if (watch) {
+			const ctx = await esbuild.context(options);
+			await ctx.watch();
+			contexts.push(ctx);
+		} else {
+			await esbuild.build(options);
+		}
+	}
+	log("JavaScript bundled successfully", "success");
+	return contexts;
+};
+
+/**
+ * Build for a specific browser: copy the (already-bundled) src/ and config/
+ * trees, skipping source files that only exist to be bundled, then inject
+ * the browser's manifest.
  */
 const buildForBrowser = (browserName, config) => {
-	try {
-		log(`Building for ${browserName.toUpperCase()}...`);
+	log(`Building for ${browserName.toUpperCase()}...`);
+	removeDir(config.dist);
+	fs.mkdirSync(config.dist, { recursive: true });
 
-		// Remove old dist folder for this browser
-		if (fs.existsSync(config.dist)) {
-			removeDir(config.dist);
-			log(`Removed old ${browserName} dist folder`);
-		}
+	copyDir(SRC_DIR, path.join(config.dist, "src"), {
+		// The React source (app/) and the unbundled background.js are build
+		// inputs only; only the emitted *.bundle.js files ship to the browser.
+		skip: (p) => p === path.join(SRC_DIR, "app") || p === path.join(SRC_DIR, "scripts", "background.js"),
+	});
+	// Ship the bundled background script under the plain name the manifests expect.
+	const bundledBg = path.join(config.dist, "src", "scripts", "background.bundle.js");
+	fs.copyFileSync(bundledBg, path.join(config.dist, "src", "scripts", "background.js"));
+	fs.unlinkSync(bundledBg);
 
-		// Create browser dist structure
-		fs.mkdirSync(config.dist, { recursive: true });
+	if (fs.existsSync(CONFIG_DIR)) copyDir(CONFIG_DIR, path.join(config.dist, "config"));
 
-		// Copy src directory
-		const srcDest = path.join(config.dist, "src");
-		copyDir(SRC_DIR, srcDest);
-		log(`Copied src/ to ${browserName}`);
+	const assetsDir = path.join(SRC_DIR, "assets");
+	if (fs.existsSync(assetsDir)) copyDir(assetsDir, path.join(config.dist, "assets"));
 
-		// Copy config directory
-		const configDest = path.join(config.dist, "config");
-		if (fs.existsSync(CONFIG_DIR)) {
-			copyDir(CONFIG_DIR, configDest);
-			log(`Copied config/ to ${browserName}`);
-		}
+	if (!fs.existsSync(config.manifest)) throw new Error(`Manifest not found: ${config.manifest}`);
+	fs.copyFileSync(config.manifest, path.join(config.dist, "manifest.json"));
 
-		// Copy assets if separate (they should be in src/assets now)
-		const assetsDir = path.join(SRC_DIR, "assets");
-		if (fs.existsSync(assetsDir)) {
-			const assetsDest = path.join(config.dist, "assets");
-			copyDir(assetsDir, assetsDest);
-			log(`Copied assets/ to ${browserName}`);
-		}
-
-		// Copy manifest
-		if (!fs.existsSync(config.manifest)) {
-			throw new Error(`Manifest not found: ${config.manifest}`);
-		}
-		const manifestDest = path.join(config.dist, "manifest.json");
-		fs.copyFileSync(config.manifest, manifestDest);
-		log(`Injected manifest for ${browserName}`);
-
-		log(
-			`${browserName.toUpperCase()} build completed successfully`,
-			"success",
-		);
-	} catch (error) {
-		log(`Error building for ${browserName}: ${error.message}`, "error");
-		throw error;
-	}
+	log(`${browserName.toUpperCase()} build completed successfully`, "success");
 };
 
-/**
- * Validate required files exist
- */
 const validateRequirements = () => {
-	const required = [SRC_DIR, MANIFESTS_DIR];
-	for (const dir of required) {
-		if (!fs.existsSync(dir)) {
-			throw new Error(`Required directory not found: ${dir}`);
-		}
+	for (const dir of [SRC_DIR, MANIFESTS_DIR]) {
+		if (!fs.existsSync(dir)) throw new Error(`Required directory not found: ${dir}`);
 	}
-
 	for (const [browser, config] of Object.entries(BROWSERS)) {
-		if (!fs.existsSync(config.manifest)) {
-			throw new Error(
-				`Manifest not found for ${browser}: ${config.manifest}`,
-			);
-		}
+		if (!fs.existsSync(config.manifest)) throw new Error(`Manifest not found for ${browser}: ${config.manifest}`);
 	}
 };
 
-/**
- * Clean dist folder only
- */
 const cleanOnly = () => {
-	try {
-		log("Cleaning dist folder...");
-		if (fs.existsSync(DIST_DIR)) {
-			removeDir(DIST_DIR);
-			log("Dist folder cleaned", "success");
-		}
-	} catch (error) {
-		log(`Error cleaning dist: ${error.message}`, "error");
-		process.exit(1);
-	}
+	log("Cleaning dist folder...");
+	removeDir(DIST_DIR);
+	log("Dist folder cleaned", "success");
 };
 
-/**
- * Main build function
- */
-const build = () => {
-	try {
-		log("========================================");
-		log("Power Toys Build System");
-		log("========================================");
+const build = async ({ watch = false } = {}) => {
+	log("========================================");
+	log("Power Toys Build System");
+	log("========================================");
 
-		// Validate requirements
-		validateRequirements();
-		log("All requirements validated", "success");
+	validateRequirements();
+	log("All requirements validated", "success");
 
-		// Clean old dist
-		if (fs.existsSync(DIST_DIR)) {
-			removeDir(DIST_DIR);
-			log("Removed old dist folder");
-		}
+	if (!watch) removeDir(DIST_DIR);
 
-		// Generate Tailwind CSS
-		generateTailwindCSS();
+	generateTailwindCSS();
+	const watchers = await bundleJavaScript({ watch });
 
-		// A missing stylesheet means an unstyled extension — never report
-		// that as a clean success.
-		if (!fs.existsSync(path.join(SRC_DIR, "styles", "main.css"))) {
-			log(
-				"src/styles/main.css was not generated — the extension will be UNSTYLED. Run `npm install` and fix the Tailwind error above.",
-				"warn",
-			);
-		}
+	if (!fs.existsSync(path.join(SRC_DIR, "styles", "main.css")) || !fs.existsSync(path.join(SRC_DIR, "pages", "popup.bundle.js"))) {
+		throw new Error("Build assets were not generated — check the esbuild/Tailwind output above.");
+	}
 
-		// Build for each browser
-		for (const [browserName, config] of Object.entries(BROWSERS)) {
-			buildForBrowser(browserName, config);
-		}
+	for (const [browserName, config] of Object.entries(BROWSERS)) {
+		buildForBrowser(browserName, config);
+	}
 
-		log("========================================");
-		log("Build completed successfully!", "success");
-		log("========================================");
-		log("Output locations:");
-		log(`  Chrome: ${CHROME_DIST}`);
-		log(`  Firefox: ${FIREFOX_DIST}`);
-	} catch (error) {
-		log("Build failed!", "error");
-		log(error.message, "error");
-		process.exit(1);
+	log("========================================");
+	log(watch ? "Initial build complete — watching for changes..." : "Build completed successfully!", "success");
+	log("========================================");
+	log("Output locations:");
+	log(`  Chrome: ${CHROME_DIST}`);
+	log(`  Firefox: ${FIREFOX_DIST}`);
+
+	if (watch) {
+		const rebuild = () => {
+			try {
+				for (const [browserName, config] of Object.entries(BROWSERS)) buildForBrowser(browserName, config);
+				log("Rebuilt dist/ after source change", "success");
+			} catch (e) {
+				log(`Rebuild failed: ${e.message}`, "error");
+			}
+		};
+		fs.watch(SRC_DIR, { recursive: true }, rebuild);
+		fs.watch(CONFIG_DIR, { recursive: true }, rebuild);
+		process.stdin.resume(); // keep the process alive
+		process.on("SIGINT", async () => {
+			await Promise.all(watchers.map((c) => c.dispose()));
+			process.exit(0);
+		});
 	}
 };
 
 // ─── Main Execution ──────────────────────────────────────────────────────────
 
+const buildPreview = async ({ watch = false } = {}) => {
+	log("Building UI preview (fixture data, no real extension APIs)...");
+	generateTailwindCSS();
+	await bundleJavaScript({ watch, bundles: [PREVIEW_BUNDLE] });
+	log("Preview ready: preview/index.html", "success");
+};
+
 const args = process.argv.slice(2);
 
 if (args.includes("--clean-only")) {
 	cleanOnly();
-} else if (args.includes("--watch")) {
-	log("Watch mode not yet implemented", "warn");
-	build();
+} else if (args.includes("--preview")) {
+	buildPreview({ watch: args.includes("--watch") }).catch((error) => {
+		log("Preview build failed!", "error");
+		log(error.message, "error");
+		process.exit(1);
+	});
 } else {
-	build();
+	build({ watch: args.includes("--watch") }).catch((error) => {
+		log("Build failed!", "error");
+		log(error.message, "error");
+		process.exit(1);
+	});
 }
