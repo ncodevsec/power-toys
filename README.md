@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.6.3-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.6.4-informational)](package.json)
 
 ---
 
@@ -256,49 +256,43 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 
 ## Changelog
 
+### v0.6.4
+
+- Shortened changelog entries for readability
+- Minor README cleanup
+
 ### v0.6.3
 
-- **Reduced overall red usage**: link paths, parameter names, and secret/code values are now shown in the normal foreground color instead of red — only the small bullet dot before each item stays red. Plain count badges (link counts, version number, repeat counter) switched from a red-tinted chip to a neutral gray one; "Sensitive" flags are still solid red since that's a real warning signal
-- **Removed the red radial-glow backdrop from the preview's main content area** (it remains on the header, where it was intended)
-- **Settings no longer shows the Links/Params/Secrets/Bulk Opener/Cipher tab bar** above it. The header's gear icon is now a proper on/off toggle, so clicking it again (or navigating away) returns you to whichever tab you were on
-- **Redesigned the Bulk Opener "Opening options" picker** as a proper radio-row list (indicator circle, bold title, hint) instead of the cramped 3-column icon tiles
-- **Fixed a light-theme contrast bug in the context-menu window header**: the "encode"/"decode" badge and the full-screen button were rendered in hardcoded white, which disappeared against the light theme's pale header background. Both now use theme-adaptive colors that stay legible in light and dark
+- Item text (links, params, secret values) now uses normal color; only the bullet dot stays red
+- Plain count badges are neutral gray now; "Sensitive" flags stay solid red
+- Removed the red glow from the main content background, kept it on the header
+- Settings page hides the tab bar; the gear icon now toggles Settings open/closed properly
+- Redesigned Bulk Opener's "Opening options" as a radio-row list
+- Fixed a light-theme bug where the context-menu window's badge and full-screen button were invisible (white-on-white)
 
 ### v0.6.2
 
-- **Widened the extension popup** (420px → 640px) so all five tabs (Links, Params, Secrets, Bulk Opener, Cipher) fit the tab bar without wrapping or horizontal scrolling
-- **Moved Settings out of the tab bar** into a gear icon in the header, next to the theme switcher — freeing up room in the tab bar and matching where settings live in most modern apps
-- **Redesigned the Settings page** as a two-pane layout: a left-hand section nav (General / URL Patterns / Parameter Keywords) and a content panel on the right, styled with macOS/iOS-style list rows for General (app info, GitHub link, export/import) and a live pattern/keyword count badge on the two editor sections
-- **Redesigned the footer**: added a row of icon-only circular links (GitHub profile, star the repo, report an issue, join the discussion) above the version line — all real, already-documented destinations from this README, not placeholder social accounts
-- **Removed the header's bottom-corner rounding** — it's now a plain-edged bar
+- Widened the popup (420px → 640px) so all tabs fit without wrapping
+- Moved Settings out of the tab bar into a gear icon in the header
+- Redesigned Settings as a two-pane nav + content layout
+- Redesigned the footer with icon-only social links
+- Removed the header's bottom-corner rounding
 
 ### v0.6.1
 
-- **Flipped the default theme to a black-and-red, high-contrast look** (the v0.6.0 palette defaulted to a light, pink-tinted surface and only went dark if the OS was set to dark mode). Near-black is now the baseline theme regardless of OS setting — `#0c0c0d` page background, layered charcoal surfaces (`#16` → `#1f`), a single vivid red accent (`#ef4141`) used consistently for primary buttons (red background, white text), active tabs, badges, and focus states. Explicit Light/Dark/System theme switching still works; "Light" is now the opt-in override instead of the default
-- Replaced the colorful crimson gradient hero header with a flat, near-black app bar (a soft red glow accent in the corner, a solid red icon chip) — closer to the flat, minimal chrome of apps like ChatGPT than a colored banner
-- Restyled toast notifications as a neutral dark card with a small colored status dot, instead of a solid red/green block
-- Neutralized card/modal shadow colors to plain black (the previous shadows were tinted dark red, which was part of what made the light theme look "reddish" overall)
+- Flipped the default theme to black-and-red, high-contrast (dark is now the baseline, not OS-dependent)
+- Replaced the crimson gradient header with a flat dark bar plus a red glow accent
+- Restyled toast notifications as neutral cards with a colored status dot
+- Neutralized shadow colors to plain black
 
 ### v0.6.0
 
-- **Rebuilt the entire UI in React + Tailwind CSS v4**, replacing the hand-written DOM manipulation in `popup.js`/`context-popup.js`. The popup, full-tab view, and context-menu quick view are now one shared React app (`src/app/`) with a reusable component library (`Button`, `Card`, `Tabs`, `Field`, `Modal`, `Badge`, `CopyButton`, etc.) instead of copy-pasted markup and event-delegation strings
-- **New crimson design system**, colour-matched to the author's other project ([NihonGo](https://ncodevsec.github.io/nihongo/), `#bd2828`): a full set of CSS custom-property design tokens (surface/border/text/brand colors, radii, shadows) with automatic light/dark variants, rounded corners on every card/button/input, and a gradient hero header
-- **Switched the build to esbuild**: the React UI and the background script are now bundled and minified (`npm run build`), instead of the old plain file-copy — smaller, faster-loading, and lets the background script import the same page-collector functions the popup uses (`src/app/lib/collectors.js`) instead of keeping a second hand-synced copy
-- **Added a static UI preview** (`npm run preview` → `preview/index.html`): mounts the real popup/full-tab/context-menu components with mocked `chrome.*` APIs and realistic fixture data, so the UI can be reviewed without loading the extension into a browser
-- **Removed `tailwind.config.js`**: Tailwind v4 is CSS-first, so the theme now lives entirely in `src/styles/input.css`
-- Carries forward the unreleased Firefox context-menu-window fix, the Firefox blank-output fix, and the Chrome popup sizing fix, now reimplemented against the new React background/context-menu code
-
-### v0.5.3
-
-- **Fixed** link categorization mismatch between the right-click "Power Toys" page action and the popup — both now use the same Files/Paths/Others scheme that matches the UI's sub-tabs, instead of the page action silently sorting links into categories the UI couldn't display
-- **Fixed** a data-leak risk in HTML entity decoding: decoding untrusted text via `div.innerHTML` could trigger real network requests for embedded resources (e.g. a tracking pixel) even though the element was never shown; decoding now uses an inert `DOMParser` document, which fetches nothing
-- **Fixed** Hex encode/decode corrupting any non-Latin-1 character (emoji, accented letters, CJK, etc.) — it now operates over UTF-8 bytes instead of raw UTF-16 code units
-- **Fixed** the context-menu secret scanner missing the vendor/dev-tool noise filter and de-dupe pass that the popup's scanner has, so results no longer differ depending on how you opened the tool
-- **Fixed** dead code in the link collector (an unused regex and a pointless re-declaration inside the loop)
-- **Unified** all encode/decode logic into one shared module (`src/app/lib/encoding.js`) instead of two copies that could drift apart
-- **Hardened** the manifest by removing `web_accessible_resources` — nothing in the extension actually needed to expose `context-popup.html` or `config/defaults.json` to arbitrary web pages; both are only ever opened/fetched from the extension's own background/popup context
-- **Fixed** the Tailwind build: Tailwind v4 moved its CLI to the separate `@tailwindcss/cli` package, and the custom theme in `tailwind.config.js` wasn't actually being loaded (v4 requires an explicit `@config` directive) — both are now correct
-- **Fixed** documentation drift: the README's install instructions, project structure, and the Firefox manifest-version claim didn't match the real unified-build architecture; the Firefox badge also linked to the Chrome Web Store by mistake
+- Rebuilt the UI in React + Tailwind CSS v4 with a shared, reusable component library
+- New crimson design system matching the NihonGo site, with light/dark variants
+- Switched the build to esbuild (bundled and minified)
+- Added a static UI preview (`npm run preview`)
+- Removed `tailwind.config.js` (Tailwind v4 is CSS-first)
+- Carries forward the Firefox/Chrome popup fixes, reimplemented against the new React code
 
 ### v0.5.2
 
