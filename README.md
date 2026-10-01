@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.7.0-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.8.0-informational)](package.json)
 
 ---
 
@@ -198,13 +198,15 @@ Automated detection of hardcoded secrets and sensitive patterns:
 
 ### 7. **User Interface Features**
 
-- **Tab-Based Navigation**:
-    - Links Tab — Extract and analyze page links
-    - Params Tab — Detect sensitive parameters
-    - Secrets Tab — Analyze hardcoded secrets
-    - Bulk Opener Tab — Open many URLs at once, by tab, by window, or grouped by domain
-    - Cipher Tab — Encoding/decoding tools
-    - Cookies Tab — View, add, edit, delete, export, and import cookies for the current site
+- **Navigation**:
+    - Popup: a top tab bar with Recon, Bulk Opener, Cipher, and Cookies; Recon shows Links/Params/Secrets as a second row of sub-tabs
+    - Full tab: a left sidebar instead of the top tab bar, with Links/Params/Secrets nested under a "Recon" section
+    - Links — Extract and analyze page links
+    - Params — Detect sensitive parameters
+    - Secrets — Analyze hardcoded secrets
+    - Bulk Opener — Open many URLs at once, by tab, by window, or grouped by domain
+    - Cipher — Encoding/decoding tools
+    - Cookies — View, add, edit, delete, export, and import cookies for the current site
     - Settings — Configuration and pattern management (gear icon in the header)
 - **Dark Mode Support** — Automatically respects system preferences
 - **Responsive Design** — Works seamlessly on different screen sizes
@@ -264,6 +266,13 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.8.0
+
+- Grouped Links, Params, and Secrets under a new "Recon" tab (page info-gathering), shown as sub-tabs in the popup
+- Top-level tabs are now Recon, Bulk Opener, Cipher, Cookies — narrower popup (760px → 600px)
+- Full-tab view now uses a left sidebar for navigation instead of the top tab bar, with Links/Params/Secrets nested under a "Recon" section
+- Fixed the full-tab preview demo not showing fixture data (unrelated to the real extension)
 
 ### v0.7.0
 

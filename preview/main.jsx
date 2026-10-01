@@ -11,7 +11,7 @@ function Root() {
 			<ToastProvider>
 				<PreviewShell>
 					{(view) => {
-						if (view === "popup") return <Frame width={640}><App /></Frame>;
+						if (view === "popup") return <Frame width={600}><App /></Frame>;
 						if (view === "fulltab") return <Frame width="100%"><App fullTab /></Frame>;
 						return <Frame width={520}><ContextApp /></Frame>;
 					}}

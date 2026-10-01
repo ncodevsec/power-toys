@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AppHeader, FullTabButton, SettingsButton, ThemeSwitch } from "../components/AppHeader.jsx";
+import { Sidebar } from "../components/Sidebar.jsx";
 import { EmptyState, Spinner, Tabs } from "../components/ui/index.js";
 import { Footer } from "../components/Footer.jsx";
 import { useTheme } from "../hooks/useTheme.js";
@@ -13,36 +14,63 @@ import CipherTab from "../tabs/CipherTab.jsx";
 import CookiesTab from "../tabs/CookiesTab.jsx";
 import SettingsTab from "../tabs/SettingsTab.jsx";
 
-// Settings lives behind the gear icon in the header, not in this tab bar —
-// keeping it out is also what lets the remaining tabs comfortably fit the
-// popup's width without wrapping or horizontal scrolling.
+// Settings lives behind the gear icon in the header, not in this tab bar.
+// Links/Params/Secrets are all page-recon tasks and are grouped under one
+// "Recon" tab (with their own sub-tabs) — both to reflect that grouping and
+// to free up room in the popup's tab bar.
 const TABS = [
-	{ id: "links", label: "Links", icon: "link" },
-	{ id: "params", label: "Params", icon: "sliders" },
-	{ id: "secrets", label: "Secrets", icon: "key" },
+	{ id: "recon", label: "Recon", icon: "eye" },
 	{ id: "bulk", label: "Bulk Opener", icon: "external" },
 	{ id: "cipher", label: "Cipher", icon: "lock" },
 	{ id: "cookies", label: "Cookies", icon: "cookie" },
 ];
 
-// Tabs backed by the page link/secret scan (usePageData) vs. tabs that work
-// independently of it — only the former should react to scan status.
-const SCAN_TABS = new Set(["links", "params", "secrets"]);
+const RECON_SUBTABS = [
+	{ id: "links", label: "Links", icon: "link" },
+	{ id: "params", label: "Params", icon: "sliders" },
+	{ id: "secrets", label: "Secrets", icon: "key" },
+];
 
 export default function App({ fullTab = false }) {
 	const [theme, setTheme] = useTheme();
-	// `tab` always holds the last-selected content tab; `showSettings` is a
-	// separate overlay-like toggle so the gear button can open AND close
+	// `tab` always holds the last-selected top-level tab; `reconSubTab` is
+	// which of Links/Params/Secrets is showing while on Recon; `showSettings`
+	// is a separate overlay-like toggle so the gear button can open AND close
 	// settings, and returning from it lands back on whichever tab was active.
-	const [tab, setTab] = useState("links");
+	const [tab, setTab] = useState("recon");
+	const [reconSubTab, setReconSubTab] = useState("links");
 	const [showSettings, setShowSettings] = useState(false);
 	const { status, links, secrets, domain } = usePageData({ fullTab });
 
 	const openFullTab = () => openTab(getURL(`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`));
 	const selectTab = (id) => { setShowSettings(false); setTab(id); };
+	const selectRecon = (subId) => { setShowSettings(false); setTab("recon"); setReconSubTab(subId); };
+
+	const content = showSettings ? (
+		<SettingsTab />
+	) : tab === "recon" ? (
+		<>
+			{status === "loading" && <Spinner />}
+			{status === "unavailable" && <EmptyState icon="shield" title="Unavailable on this page" hint="Browser and extension pages can't be inspected." />}
+			{status === "empty" && <EmptyState icon="inbox" title="No links found" hint="Try opening this from the extension's popup instead." />}
+			{status === "ready" && (
+				<>
+					{reconSubTab === "links" && <LinksTab links={links} domain={domain} />}
+					{reconSubTab === "params" && <ParamsTab links={links} />}
+					{reconSubTab === "secrets" && <SecretsTab secrets={secrets} />}
+				</>
+			)}
+		</>
+	) : (
+		<>
+			{tab === "bulk" && <BulkTab />}
+			{tab === "cipher" && <CipherTab />}
+			{tab === "cookies" && <CookiesTab domain={domain} />}
+		</>
+	);
 
 	return (
-		<div className={fullTab ? "mx-auto max-w-[880px]" : "w-[760px]"}>
+		<div className={fullTab ? "mx-auto max-w-[1100px]" : "w-[600px]"}>
 			<AppHeader
 				title="Power" accent=" Toys"
 				subtitle={domain || "Bug hunting toolkit"}
@@ -53,36 +81,23 @@ export default function App({ fullTab = false }) {
 				</>}
 			/>
 
-			{!showSettings && (
-				<div className="px-4 pt-4">
-					<Tabs items={TABS} value={tab} onChange={selectTab} />
+			{fullTab ? (
+				<div className="flex items-start">
+					<Sidebar tab={tab} reconSubTab={reconSubTab} onSelectRecon={selectRecon} onSelectTab={selectTab} />
+					<main className="min-h-[500px] min-w-0 flex-1 px-5 py-4">{content}</main>
 				</div>
+			) : (
+				<>
+					{!showSettings && (
+						<div className="space-y-2 px-4 pt-4">
+							<Tabs items={TABS} value={tab} onChange={selectTab} />
+							{tab === "recon" && <Tabs variant="chip" items={RECON_SUBTABS} value={reconSubTab} onChange={setReconSubTab} />}
+						</div>
+					)}
+					<main className="min-h-[300px] px-4 py-4">{content}</main>
+				</>
 			)}
 
-			<main className="min-h-[300px] px-4 py-4">
-				{showSettings ? (
-					<SettingsTab />
-				) : SCAN_TABS.has(tab) ? (
-					<>
-						{status === "loading" && <Spinner />}
-						{status === "unavailable" && <EmptyState icon="shield" title="Unavailable on this page" hint="Browser and extension pages can't be inspected." />}
-						{status === "empty" && <EmptyState icon="inbox" title="No links found" hint="Try opening this from the extension's popup instead." />}
-						{status === "ready" && (
-							<>
-								{tab === "links" && <LinksTab links={links} domain={domain} />}
-								{tab === "params" && <ParamsTab links={links} />}
-								{tab === "secrets" && <SecretsTab secrets={secrets} />}
-							</>
-						)}
-					</>
-				) : (
-					<>
-						{tab === "bulk" && <BulkTab />}
-						{tab === "cipher" && <CipherTab />}
-						{tab === "cookies" && <CookiesTab domain={domain} />}
-					</>
-				)}
-			</main>
 			<Footer />
 		</div>
 	);

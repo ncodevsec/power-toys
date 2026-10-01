@@ -12,6 +12,11 @@ const store = {
 		// Pre-seeded so the "Context-menu window" preview shows real content
 		// instead of the empty "waiting for selection" state.
 		contextMenuData: { selectedText: "session_id=8f19a2c7-4b3e-4a91-9c2d-6e1f0a5b7d3c", method: "base64", operation: "encode" },
+		// Pre-seeded so the "Full tab view" preview (which reads cached scan
+		// results from storage instead of re-scanning a tab) shows the same
+		// fixture data as the popup view, instead of an empty state.
+		savedLinks: FIXTURE_LINKS,
+		savedSecrets: FIXTURE_SECRETS,
 	},
 	sync: {},
 };
