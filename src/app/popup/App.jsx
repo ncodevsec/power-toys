@@ -10,6 +10,7 @@ import ParamsTab from "../tabs/ParamsTab.jsx";
 import SecretsTab from "../tabs/SecretsTab.jsx";
 import BulkTab from "../tabs/BulkTab.jsx";
 import CipherTab from "../tabs/CipherTab.jsx";
+import CookiesTab from "../tabs/CookiesTab.jsx";
 import SettingsTab from "../tabs/SettingsTab.jsx";
 
 // Settings lives behind the gear icon in the header, not in this tab bar —
@@ -21,7 +22,12 @@ const TABS = [
 	{ id: "secrets", label: "Secrets", icon: "key" },
 	{ id: "bulk", label: "Bulk Opener", icon: "external" },
 	{ id: "cipher", label: "Cipher", icon: "lock" },
+	{ id: "cookies", label: "Cookies", icon: "cookie" },
 ];
+
+// Tabs backed by the page link/secret scan (usePageData) vs. tabs that work
+// independently of it — only the former should react to scan status.
+const SCAN_TABS = new Set(["links", "params", "secrets"]);
 
 export default function App({ fullTab = false }) {
 	const [theme, setTheme] = useTheme();
@@ -36,7 +42,7 @@ export default function App({ fullTab = false }) {
 	const selectTab = (id) => { setShowSettings(false); setTab(id); };
 
 	return (
-		<div className={fullTab ? "mx-auto max-w-[880px]" : "w-[640px]"}>
+		<div className={fullTab ? "mx-auto max-w-[880px]" : "w-[760px]"}>
 			<AppHeader
 				title="Power" accent=" Toys"
 				subtitle={domain || "Bug hunting toolkit"}
@@ -56,20 +62,24 @@ export default function App({ fullTab = false }) {
 			<main className="min-h-[300px] px-4 py-4">
 				{showSettings ? (
 					<SettingsTab />
-				) : (
+				) : SCAN_TABS.has(tab) ? (
 					<>
 						{status === "loading" && <Spinner />}
 						{status === "unavailable" && <EmptyState icon="shield" title="Unavailable on this page" hint="Browser and extension pages can't be inspected." />}
 						{status === "empty" && <EmptyState icon="inbox" title="No links found" hint="Try opening this from the extension's popup instead." />}
-						{(status === "ready" || tab === "bulk" || tab === "cipher") && (
+						{status === "ready" && (
 							<>
 								{tab === "links" && <LinksTab links={links} domain={domain} />}
 								{tab === "params" && <ParamsTab links={links} />}
 								{tab === "secrets" && <SecretsTab secrets={secrets} />}
-								{tab === "bulk" && <BulkTab />}
-								{tab === "cipher" && <CipherTab />}
 							</>
 						)}
+					</>
+				) : (
+					<>
+						{tab === "bulk" && <BulkTab />}
+						{tab === "cipher" && <CipherTab />}
+						{tab === "cookies" && <CookiesTab domain={domain} />}
 					</>
 				)}
 			</main>

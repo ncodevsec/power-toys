@@ -43,3 +43,9 @@ export const runInTab = async (tabId, func) =>
 			func,
 		})
 	)?.[0]?.result;
+
+export const cookies = {
+	getAll: (details) => call(api().cookies.getAll.bind(api().cookies), details),
+	set: (details) => call(api().cookies.set.bind(api().cookies), details),
+	remove: (details) => call(api().cookies.remove.bind(api().cookies), details),
+};

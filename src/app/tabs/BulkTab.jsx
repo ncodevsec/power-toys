@@ -11,8 +11,8 @@ const MODES = [
 	{ id: "eachDomain", title: "Window per domain", hint: "Group URLs by hostname" },
 ];
 
-/** A properly-styled radio row (indicator + title + hint), used as a
- * cleaner, more legible replacement for native radio inputs. */
+/** A properly-styled, compact radio row (indicator + title + hint on one
+ * line), used as a cleaner replacement for native radio inputs. */
 function RadioRow({ title, hint, selected, onSelect }) {
 	return (
 		<button
@@ -21,16 +21,16 @@ function RadioRow({ title, hint, selected, onSelect }) {
 			aria-checked={selected}
 			onClick={onSelect}
 			className={cx(
-				"flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition",
+				"flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition",
 				selected ? "border-brand bg-brand-soft" : "border-line hover:border-brand/40",
 			)}
 		>
-			<span className={cx("mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2 transition", selected ? "border-brand" : "border-line")}>
-				{selected && <span className="size-2.5 rounded-full bg-brand" />}
+			<span className={cx("grid size-4 shrink-0 place-items-center rounded-full border-2 transition", selected ? "border-brand" : "border-line")}>
+				{selected && <span className="size-2 rounded-full bg-brand" />}
 			</span>
-			<span className="min-w-0">
-				<span className="block text-sm font-bold">{title}</span>
-				<span className="block text-xs text-muted">{hint}</span>
+			<span className="min-w-0 truncate text-sm">
+				<span className="font-semibold">{title}</span>
+				<span className="text-muted"> — {hint}</span>
 			</span>
 		</button>
 	);
@@ -71,7 +71,7 @@ export default function BulkTab() {
 				</Field>
 
 				<Field label="Opening options">
-					<div role="radiogroup" aria-label="Opening options" className="space-y-2">
+					<div role="radiogroup" aria-label="Opening options" className="space-y-1.5">
 						{MODES.map((m) => (
 							<RadioRow key={m.id} title={m.title} hint={m.hint} selected={mode === m.id} onSelect={() => setMode(m.id)} />
 						))}

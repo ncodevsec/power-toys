@@ -5,7 +5,7 @@
  * is evaluated — see the note in src/app/lib/browser.js about lazy lookup.
  */
 import defaultsJson from "../config/defaults.json";
-import { FIXTURE_LINKS, FIXTURE_SECRETS } from "./fixtures.js";
+import { FIXTURE_LINKS, FIXTURE_SECRETS, FIXTURE_COOKIES } from "./fixtures.js";
 
 const store = {
 	local: {
@@ -16,6 +16,13 @@ const store = {
 	sync: {},
 };
 let execCallIndex = 0;
+let cookieStore = [...FIXTURE_COOKIES];
+
+const normDomain = (d) => (d || "").replace(/^\./, "");
+const domainMatches = (cookieDomain, filterDomain) => {
+	const c = normDomain(cookieDomain), f = normDomain(filterDomain);
+	return c === f || c.endsWith("." + f);
+};
 
 window.chrome = {
 	runtime: {
@@ -47,6 +54,36 @@ window.chrome = {
 		},
 	},
 	windows: { create: () => {} },
+	// Backed by a real mutable in-memory array so add/edit/delete/import/export
+	// in the Cookies tab preview actually work, not just render static data.
+	cookies: {
+		getAll: ({ domain } = {}, cb) => cb(cookieStore.filter((c) => !domain || domainMatches(c.domain, domain))),
+		set: (details, cb) => {
+			let host = "";
+			try { host = new URL(details.url).hostname; } catch { return cb(null); }
+			const domain = details.domain || host;
+			const path = details.path || "/";
+			const next = {
+				name: details.name,
+				value: details.value ?? "",
+				domain,
+				path,
+				secure: !!details.secure,
+				httpOnly: !!details.httpOnly,
+				sameSite: details.sameSite || "lax",
+				...(details.expirationDate ? { expirationDate: details.expirationDate } : {}),
+			};
+			cookieStore = cookieStore.filter((c) => !(c.name === next.name && c.domain === next.domain && c.path === next.path));
+			cookieStore.push(next);
+			cb(next);
+		},
+		remove: (details, cb) => {
+			let host = "";
+			try { host = new URL(details.url).hostname; } catch {}
+			cookieStore = cookieStore.filter((c) => !(c.name === details.name && domainMatches(c.domain, host)));
+			cb({ name: details.name, url: details.url });
+		},
+	},
 };
 
 const realFetch = window.fetch?.bind(window);

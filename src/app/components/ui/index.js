@@ -8,3 +8,4 @@ export { Spinner, EmptyState, Toast } from "./Feedback.jsx";
 export { Modal } from "./Modal.jsx";
 export { CopyButton } from "./CopyButton.jsx";
 export { Dropdown } from "./Dropdown.jsx";
+export { Toggle } from "./Toggle.jsx";

@@ -15,6 +15,14 @@ export const FIXTURE_LINKS = [
 	{ fullUrl: "https://www.googletagmanager.com/gtag/js?id=G-1PXQ", category: "Others", domain: "www.googletagmanager.com", path: "/gtag/js?id=G-1PXQ" },
 ];
 
+export const FIXTURE_COOKIES = [
+	{ name: "session_id", value: "s%3A8f19a2c7-4b3e-4a91-9c2d-6e1f0a5b7d3c", domain: "app.example.com", path: "/", secure: true, httpOnly: true, sameSite: "lax" },
+	{ name: "auth_token", value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example", domain: "app.example.com", path: "/", secure: true, httpOnly: true, sameSite: "strict", expirationDate: Math.floor(Date.now() / 1000) + 3600 },
+	{ name: "theme", value: "dark", domain: "app.example.com", path: "/", secure: false, httpOnly: false, sameSite: "lax", expirationDate: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365 },
+	{ name: "_ga", value: "GA1.2.1234567890.1700000000", domain: ".example.com", path: "/", secure: false, httpOnly: false, sameSite: "no_restriction", expirationDate: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 730 },
+	{ name: "cart_id", value: "c-9182736450", domain: "app.example.com", path: "/checkout", secure: true, httpOnly: false, sameSite: "lax" },
+];
+
 export const FIXTURE_SECRETS = {
 	apiKeys: [
 		{ type: "API Key", pattern: "apiKey: 'AIzaSyD-9f8h2mNcR7pQvXo1kLwYtZs3eB6jUiA'", value: "AIzaSyD-9f8h2mNcR7pQvXo1kLwYtZs3eB6jUiA", source: "JS/CSS Code" },

@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.6.4-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.7.0-informational)](package.json)
 
 ---
 
@@ -202,8 +202,10 @@ Automated detection of hardcoded secrets and sensitive patterns:
     - Links Tab — Extract and analyze page links
     - Params Tab — Detect sensitive parameters
     - Secrets Tab — Analyze hardcoded secrets
+    - Bulk Opener Tab — Open many URLs at once, by tab, by window, or grouped by domain
     - Cipher Tab — Encoding/decoding tools
-    - Settings Tab — Configuration and pattern management
+    - Cookies Tab — View, add, edit, delete, export, and import cookies for the current site
+    - Settings — Configuration and pattern management (gear icon in the header)
 - **Dark Mode Support** — Automatically respects system preferences
 - **Responsive Design** — Works seamlessly on different screen sizes
 - **Toast Notifications** — Non-intrusive feedback for user actions
@@ -215,12 +217,19 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - Direct access to Power Toys tools from context menus
 - Instant analysis without opening the main popup
 
+### 9. **Cookie Management**
+
+- View every cookie set for the current site, grouped by domain
+- Add, edit, and delete cookies directly (name, value, domain, path, SameSite, Secure, HttpOnly, expiration)
+- Export the current site's cookies to a JSON file, or import a previously exported file
+- Cookie names are checked against the same sensitive-keyword list used for parameters
+
 ## Technical Details
 
 | Aspect               | Chrome                                                      | Firefox                                               |
 | -------------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
 | **Manifest Version** | 3 (service worker background)                                | 3 (persistent background script)                       |
-| **Permissions**      | activeTab, scripting, storage, contextMenus, system.display | activeTab, scripting, storage, contextMenus           |
+| **Permissions**      | activeTab, scripting, storage, contextMenus, cookies, system.display | activeTab, scripting, storage, contextMenus, cookies  |
 | **Host Permissions** | `<all_urls>`                                                 | `<all_urls>`                                          |
 | **Background**       | Service Worker (`background.js`, esbuild-bundled)             | Background Script (`background.js`, esbuild-bundled)  |
 | **Popup**            | `popup.html` + React (`popup.bundle.js`)                      | `popup.html` + React (`popup.bundle.js`)               |
@@ -255,6 +264,15 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.7.0
+
+- Added a Cookies tab (next to Cipher): view, add, edit, and delete cookies for the current site, with export/import as JSON
+- Cookie names are checked against the same sensitive-keyword list as params, with a "Sensitive" badge
+- Requires a new `cookies` permission in both manifests
+- Widened the popup further (640px → 760px) to fit the new tab
+- Made the Bulk Opener's radio rows more compact (single line, tighter padding)
+- Fixed a bug where Bulk Opener/Cipher could show a stray "No links found" message alongside their own content
 
 ### v0.6.4
 

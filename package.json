@@ -1,6 +1,6 @@
 {
 	"name": "power-toys",
-	"version": "0.6.4",
+	"version": "0.7.0",
 	"description": "Essential toolkit for pentesters and bug hunters. Quickly extract links, encode/decode data, and simplify everyday security tasks.",
 	"main": "build.js",
 	"scripts": {

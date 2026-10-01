@@ -27,6 +27,14 @@ const PATHS = {
 	star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z" />,
 	"message-circle": <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
 	"alert-circle": <><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>,
+	plus: <path d="M12 5v14M5 12h14" />,
+	edit: <><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></>,
+	cookie: <>
+		<path d="M12 2a10 10 0 1 0 9.54 13.14c-.62.22-1.29.34-1.99.34a5.5 5.5 0 0 1-5.5-5.5c0-.7.12-1.37.34-1.99A10 10 0 0 0 12 2Z" />
+		<circle cx="8.5" cy="10.5" r="0.75" fill="currentColor" stroke="none" />
+		<circle cx="13" cy="15" r="0.75" fill="currentColor" stroke="none" />
+		<circle cx="9.5" cy="15.5" r="0.75" fill="currentColor" stroke="none" />
+	</>,
 };
 
 export function Icon({ name, size = 16, className = "", strokeWidth = 2 }) {
