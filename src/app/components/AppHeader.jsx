@@ -48,4 +48,8 @@ export function AppHeader({ title, accent, subtitle, actions, className }) {
 }
 
 export const FullTabButton = ({ onClick }) => <IconButton icon="maximize" label="Open in full tab" variant="outline" onClick={onClick} />;
-export const SettingsButton = ({ active, onClick }) => <IconButton icon="settings" label="Settings" variant="outline" active={active} onClick={onClick} />;
+/** Gear icon that becomes a back arrow while Settings is open — the button
+ * always describes the action a click will perform, not the current page. */
+export const SettingsButton = ({ active, onClick }) => (
+	<IconButton icon={active ? "arrow-left" : "settings"} label={active ? "Back" : "Settings"} variant="outline" active={active} onClick={onClick} />
+);

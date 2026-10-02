@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.8.0-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-0.9.0-informational)](package.json)
 
 ---
 
@@ -266,6 +266,14 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v0.9.0
+
+- Full-tab sidebar is now full viewport height and sticky while scrolling
+- Recon is now a collapsible accordion in the sidebar instead of always-expanded
+- Settings' own navigation is now a horizontal tab bar (General / URL Patterns / Parameter Keywords), matching the rest of the app
+- In full-tab view, opening Settings swaps the sidebar to Settings' sections instead of showing its own tab bar
+- The header's Settings gear turns into a back arrow while Settings is open
 
 ### v0.8.0
 

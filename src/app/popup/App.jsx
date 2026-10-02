@@ -6,6 +6,7 @@ import { Footer } from "../components/Footer.jsx";
 import { useTheme } from "../hooks/useTheme.js";
 import { usePageData } from "../hooks/usePageData.js";
 import { getURL, openTab } from "../lib/browser.js";
+import { TOP_TABS, RECON_SUBTABS } from "../lib/navigation.js";
 import LinksTab from "../tabs/LinksTab.jsx";
 import ParamsTab from "../tabs/ParamsTab.jsx";
 import SecretsTab from "../tabs/SecretsTab.jsx";
@@ -14,32 +15,19 @@ import CipherTab from "../tabs/CipherTab.jsx";
 import CookiesTab from "../tabs/CookiesTab.jsx";
 import SettingsTab from "../tabs/SettingsTab.jsx";
 
-// Settings lives behind the gear icon in the header, not in this tab bar.
-// Links/Params/Secrets are all page-recon tasks and are grouped under one
-// "Recon" tab (with their own sub-tabs) — both to reflect that grouping and
-// to free up room in the popup's tab bar.
-const TABS = [
-	{ id: "recon", label: "Recon", icon: "eye" },
-	{ id: "bulk", label: "Bulk Opener", icon: "external" },
-	{ id: "cipher", label: "Cipher", icon: "lock" },
-	{ id: "cookies", label: "Cookies", icon: "cookie" },
-];
-
-const RECON_SUBTABS = [
-	{ id: "links", label: "Links", icon: "link" },
-	{ id: "params", label: "Params", icon: "sliders" },
-	{ id: "secrets", label: "Secrets", icon: "key" },
-];
-
 export default function App({ fullTab = false }) {
 	const [theme, setTheme] = useTheme();
 	// `tab` always holds the last-selected top-level tab; `reconSubTab` is
 	// which of Links/Params/Secrets is showing while on Recon; `showSettings`
 	// is a separate overlay-like toggle so the gear button can open AND close
 	// settings, and returning from it lands back on whichever tab was active.
+	// `settingsSection` is lifted up here (rather than owned by SettingsTab)
+	// so it can drive both the popup's horizontal tabs and the full-tab
+	// sidebar's settings nav from the same state.
 	const [tab, setTab] = useState("recon");
 	const [reconSubTab, setReconSubTab] = useState("links");
 	const [showSettings, setShowSettings] = useState(false);
+	const [settingsSection, setSettingsSection] = useState("general");
 	const { status, links, secrets, domain } = usePageData({ fullTab });
 
 	const openFullTab = () => openTab(getURL(`src/pages/popup.html?fullTab=true&domain=${encodeURIComponent(domain)}`));
@@ -47,7 +35,7 @@ export default function App({ fullTab = false }) {
 	const selectRecon = (subId) => { setShowSettings(false); setTab("recon"); setReconSubTab(subId); };
 
 	const content = showSettings ? (
-		<SettingsTab />
+		<SettingsTab section={settingsSection} onSectionChange={setSettingsSection} fullTab={fullTab} />
 	) : tab === "recon" ? (
 		<>
 			{status === "loading" && <Spinner />}
@@ -82,15 +70,23 @@ export default function App({ fullTab = false }) {
 			/>
 
 			{fullTab ? (
-				<div className="flex items-start">
-					<Sidebar tab={tab} reconSubTab={reconSubTab} onSelectRecon={selectRecon} onSelectTab={selectTab} />
+				<div className="flex">
+					<Sidebar
+						showSettings={showSettings}
+						tab={tab}
+						reconSubTab={reconSubTab}
+						onSelectRecon={selectRecon}
+						onSelectTab={selectTab}
+						settingsSection={settingsSection}
+						onSelectSettingsSection={setSettingsSection}
+					/>
 					<main className="min-h-[500px] min-w-0 flex-1 px-5 py-4">{content}</main>
 				</div>
 			) : (
 				<>
 					{!showSettings && (
 						<div className="space-y-2 px-4 pt-4">
-							<Tabs items={TABS} value={tab} onChange={selectTab} />
+							<Tabs items={TOP_TABS} value={tab} onChange={selectTab} />
 							{tab === "recon" && <Tabs variant="chip" items={RECON_SUBTABS} value={reconSubTab} onChange={setReconSubTab} />}
 						</div>
 					)}

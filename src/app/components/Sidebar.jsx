@@ -1,17 +1,9 @@
+import { useState } from "react";
 import { Icon } from "./ui/index.js";
 import { cx } from "../lib/utils.js";
+import { TOP_TABS, RECON_SUBTABS, SETTINGS_SECTIONS } from "../lib/navigation.js";
 
-const RECON_ITEMS = [
-	{ id: "links", label: "Links", icon: "link" },
-	{ id: "params", label: "Params", icon: "sliders" },
-	{ id: "secrets", label: "Secrets", icon: "key" },
-];
-
-const STANDALONE_ITEMS = [
-	{ id: "bulk", label: "Bulk Opener", icon: "external" },
-	{ id: "cipher", label: "Cipher", icon: "lock" },
-	{ id: "cookies", label: "Cookies", icon: "cookie" },
-];
+const STANDALONE_ITEMS = TOP_TABS.filter((t) => t.id !== "recon");
 
 function NavLink({ icon, label, active, onClick, indent }) {
 	return (
@@ -30,29 +22,68 @@ function NavLink({ icon, label, active, onClick, indent }) {
 	);
 }
 
-/**
- * Full-tab-only left navigation, replacing the horizontal tab bar used in
- * the popup. Recon's three sub-views are nested under a section label since
- * there's room here to show the whole hierarchy at once, instead of the
- * popup's two-row (top tabs + chip row) approach.
- */
-export function Sidebar({ tab, reconSubTab, onSelectRecon, onSelectTab }) {
+/** Accordion group header (Recon) — toggles open/closed, never itself
+ * navigable, matching how category headers behave in most docs sidebars. */
+function AccordionHeader({ icon, label, open, onToggle }) {
 	return (
-		<nav className="flex w-56 shrink-0 flex-col gap-4 border-r border-line bg-surface-2/40 px-3 py-4">
-			<div>
-				<p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-subtle">Recon</p>
-				<div className="space-y-0.5">
-					{RECON_ITEMS.map((item) => (
-						<NavLink key={item.id} indent icon={item.icon} label={item.label} active={tab === "recon" && reconSubTab === item.id} onClick={() => onSelectRecon(item.id)} />
-					))}
+		<button
+			type="button"
+			aria-expanded={open}
+			onClick={onToggle}
+			className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-muted transition hover:bg-surface-2 hover:text-fg"
+		>
+			<span className="flex items-center gap-2.5">
+				<Icon name={icon} size={15} />
+				{label}
+			</span>
+			<Icon name="chevron" size={13} className={cx("transition-transform", open && "rotate-180")} />
+		</button>
+	);
+}
+
+/**
+ * Full-tab-only left navigation, replacing the popup's horizontal tab bar.
+ * Recon is a collapsible accordion (its three sub-views spread open below
+ * it) rather than always-expanded, since collapsing it frees up room for
+ * everything else. While Settings is open, the whole nav swaps to Settings'
+ * own sections instead of the main app's tabs.
+ */
+export function Sidebar({ showSettings, tab, reconSubTab, onSelectRecon, onSelectTab, settingsSection, onSelectSettingsSection }) {
+	const [reconOpen, setReconOpen] = useState(true);
+
+	return (
+		<nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line bg-surface-2/40 px-3 py-4">
+			{showSettings ? (
+				<div>
+					<p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-subtle">Settings</p>
+					<div className="space-y-0.5">
+						{SETTINGS_SECTIONS.map((s) => (
+							<NavLink key={s.id} icon={s.icon} label={s.label} active={settingsSection === s.id} onClick={() => onSelectSettingsSection(s.id)} />
+						))}
+					</div>
 				</div>
-			</div>
-			<div className="h-px bg-line" />
-			<div className="space-y-0.5">
-				{STANDALONE_ITEMS.map((item) => (
-					<NavLink key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => onSelectTab(item.id)} />
-				))}
-			</div>
+			) : (
+				<>
+					<div>
+						<AccordionHeader icon="eye" label="Recon" open={reconOpen} onToggle={() => setReconOpen((v) => !v)} />
+						<div className={cx("grid transition-all duration-200 ease-out", reconOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+							<div className="overflow-hidden">
+								<div className="space-y-0.5 pt-0.5">
+									{RECON_SUBTABS.map((item) => (
+										<NavLink key={item.id} indent icon={item.icon} label={item.label} active={tab === "recon" && reconSubTab === item.id} onClick={() => onSelectRecon(item.id)} />
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+					<div className="h-px bg-line" />
+					<div className="space-y-0.5">
+						{STANDALONE_ITEMS.map((item) => (
+							<NavLink key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => onSelectTab(item.id)} />
+						))}
+					</div>
+				</>
+			)}
 		</nav>
 	);
 }

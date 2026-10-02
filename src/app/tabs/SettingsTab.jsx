@@ -1,30 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Field, GithubGlyph, Icon, Modal, Textarea } from "../components/ui/index.js";
+import { Badge, Button, Field, GithubGlyph, Icon, Modal, Tabs, Textarea } from "../components/ui/index.js";
 import { getVersion, openTab } from "../lib/browser.js";
 import { cx, downloadJson, pickJsonFile } from "../lib/utils.js";
+import { SETTINGS_SECTIONS } from "../lib/navigation.js";
 import { usePatterns, useToast } from "../providers.jsx";
-
-const SECTIONS = [
-	{ id: "general", label: "General", icon: "shield" },
-	{ id: "urls", label: "URL patterns", icon: "link" },
-	{ id: "params", label: "Parameter keywords", icon: "sliders" },
-];
-
-function NavItem({ item, active, onClick }) {
-	return (
-		<button
-			onClick={onClick}
-			aria-current={active}
-			className={cx(
-				"flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition",
-				active ? "bg-brand-soft text-brand-ink" : "text-muted hover:bg-surface-2 hover:text-fg",
-			)}
-		>
-			<Icon name={item.icon} size={16} />
-			{item.label}
-		</button>
-	);
-}
 
 /** A single labeled row with a leading icon chip and a trailing action — the
  * settings-app list pattern (macOS/iOS Settings), used for General items. */
@@ -56,10 +35,16 @@ function PatternEditor({ section, value, onChange, count, unit }) {
 	);
 }
 
-export default function SettingsTab() {
+/**
+ * `section`/`onSectionChange` are controlled from the parent (App.jsx) so
+ * the same selection can drive two different navigation presentations:
+ * a horizontal tab bar here in the popup, or the full-tab view's sidebar
+ * (which replaces its own nav with these sections and renders nothing of
+ * its own here — hence the `fullTab` flag to skip the tab bar in that case).
+ */
+export default function SettingsTab({ section, onSectionChange, fullTab }) {
 	const { raw, save, reset } = usePatterns();
 	const toast = useToast();
-	const [section, setSection] = useState("general");
 	const [params, setParams] = useState("");
 	const [urls, setUrls] = useState("");
 	const [confirmReset, setConfirmReset] = useState(false);
@@ -95,14 +80,10 @@ export default function SettingsTab() {
 	};
 
 	return (
-		<div className="grid grid-cols-[168px_1fr] gap-5">
-			<nav className="space-y-1 border-r border-line pr-4">
-				{SECTIONS.map((s) => (
-					<NavItem key={s.id} item={s} active={section === s.id} onClick={() => setSection(s.id)} />
-				))}
-			</nav>
+		<div className="space-y-4">
+			{!fullTab && <Tabs items={SETTINGS_SECTIONS} value={section} onChange={onSectionChange} />}
 
-			<div className="min-w-0 space-y-4">
+			<div className={cx("space-y-4", fullTab && "max-w-2xl")}>
 				{section === "general" && (
 					<>
 						<div className="flex items-center gap-3.5 rounded-2xl border border-line bg-surface-2/60 p-4">
