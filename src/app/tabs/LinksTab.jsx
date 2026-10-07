@@ -1,15 +1,18 @@
 import { useMemo, useState } from "react";
-import { Badge, CopyButton, EmptyState, SearchInput, Tabs } from "../components/ui/index.js";
+import { Badge, CopyButton, Dropdown, EmptyState, SearchInput, Tabs } from "../components/ui/index.js";
 import { DomainCard } from "../components/DomainCard.jsx";
 import { ResultCount, SensitiveToggle, Toolbar } from "../components/Toolbar.jsx";
 import { getFileExtension, groupByDomain, sortedFileTypes } from "../lib/links.js";
 import { isSensitiveLink } from "../lib/sensitivity.js";
-import { usePatterns } from "../providers.jsx";
+import { toBurpSitemap, toPostmanCollection, downloadText } from "../lib/exportFormats.js";
+import { downloadJson } from "../lib/utils.js";
+import { usePatterns, useToast } from "../providers.jsx";
 
 const CATEGORIES = ["All", "Paths", "Files", "Others"];
 
 export default function LinksTab({ links, domain }) {
 	const { compiled } = usePatterns();
+	const toast = useToast();
 	const [category, setCategory] = useState("All");
 	const [fileType, setFileType] = useState(null);
 	const [query, setQuery] = useState("");
@@ -35,6 +38,12 @@ export default function LinksTab({ links, domain }) {
 		count: c === "All" ? links.length : links.filter((l) => l.category === c).length,
 	}));
 
+	const exportAs = (format) => {
+		if (!visible.length) return toast("No links to export", "error");
+		if (format === "postman") downloadJson(toPostmanCollection(visible, domain || "Power Toys Export"), `power-toys-links-${domain || "export"}.postman_collection.json`);
+		if (format === "burp") downloadText(toBurpSitemap(visible), `power-toys-links-${domain || "export"}.burp.xml`, "application/xml");
+	};
+
 	return (
 		<div className="space-y-3">
 			<Toolbar
@@ -42,6 +51,10 @@ export default function LinksTab({ links, domain }) {
 				right={<>
 					<SensitiveToggle active={onlySensitive} onClick={() => setOnlySensitive((v) => !v)} />
 					<CopyButton getText={() => visible.map((l) => l.fullUrl).join("\n")} empty="No links to copy" />
+					<Dropdown icon="download" label="Export" items={[
+						{ label: "Postman collection", onClick: () => exportAs("postman") },
+						{ label: "Burp sitemap (XML)", onClick: () => exportAs("burp") },
+					]} />
 				</>}
 			/>
 			{fileTypes.length > 0 && (

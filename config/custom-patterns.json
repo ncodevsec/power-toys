@@ -1,0 +1,7 @@
+{
+	"patterns": [
+		{ "id": "ctf-flag-lower", "name": "CTF Flag", "pattern": "flag\\{[^}]{1,200}\\}", "flags": "gi" },
+		{ "id": "ctf-flag-upper", "name": "CTF Flag (CTF{})", "pattern": "CTF\\{[^}]{1,200}\\}", "flags": "g" },
+		{ "id": "ctf-flag-htb", "name": "HTB Flag", "pattern": "HTB\\{[^}]{1,200}\\}", "flags": "g" }
+	]
+}

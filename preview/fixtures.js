@@ -15,6 +15,15 @@ export const FIXTURE_LINKS = [
 	{ fullUrl: "https://www.googletagmanager.com/gtag/js?id=G-1PXQ", category: "Others", domain: "www.googletagmanager.com", path: "/gtag/js?id=G-1PXQ" },
 ];
 
+export const FIXTURE_WEB_STORAGE = {
+	local: [
+		{ key: "auth_token", value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example" },
+		{ key: "theme", value: "dark" },
+		{ key: "user_prefs", value: '{"lang":"en","notifications":true}' },
+	],
+	session: [{ key: "csrf_token", value: "f3a9c1e8b2d4" }],
+};
+
 export const FIXTURE_COOKIES = [
 	{ name: "session_id", value: "s%3A8f19a2c7-4b3e-4a91-9c2d-6e1f0a5b7d3c", domain: "app.example.com", path: "/", secure: true, httpOnly: true, sameSite: "lax" },
 	{ name: "auth_token", value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example", domain: "app.example.com", path: "/", secure: true, httpOnly: true, sameSite: "strict", expirationDate: Math.floor(Date.now() / 1000) + 3600 },
@@ -44,6 +53,7 @@ export const FIXTURE_SECRETS = {
 	comments: [
 		{ type: "HTML Comment", content: "<!-- TODO: remove /admin/legacy before launch, still using default creds -->", source: "Page Source", sourceUrl: "https://app.example.com/dashboard" },
 		{ type: "JavaScript Comment", content: "// FIXME: hardcoded staging key, rotate before prod deploy", source: "Script", sourceUrl: "https://app.example.com/dashboard" },
+		{ type: "HTML Comment", content: "<!-- dev note: left this in by accident -- flag{sample_ctf_flag_42} -->", source: "Page Source", sourceUrl: "https://app.example.com/dashboard" },
 	],
 	hiddenLinks: [
 		{ type: "Hidden URL", value: "https://old-staging.example.com/admin", source: "HTML Comment" },

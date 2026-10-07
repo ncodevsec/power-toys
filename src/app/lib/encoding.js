@@ -68,3 +68,56 @@ export const encoding = {
 			),
 	},
 };
+
+export const METHODS = [
+	["base64", "Base64"],
+	["url", "URL encoding (percent-encoding)"],
+	["html", "HTML entities"],
+	["hex", "Hexadecimal"],
+	["unicode", "Unicode escapes"],
+];
+
+const AUTO_DECODE_METHODS = ["base64", "url", "hex", "html", "unicode"];
+
+/** Fraction of characters that are printable ASCII/whitespace — used to
+ * score candidate auto-decode results. */
+function printableScore(s) {
+	if (!s) return 0;
+	let printable = 0;
+	for (const ch of s) {
+		const code = ch.codePointAt(0);
+		if ((code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13) printable++;
+	}
+	return printable / s.length;
+}
+
+/**
+ * Tries every decode method, chained up to `maxDepth` layers deep (CTF
+ * values are often base64-of-url-of-base64, etc.), and returns the
+ * printable-looking results, best first.
+ */
+export function autoDecode(input, { maxDepth = 3, minScore = 0.85 } = {}) {
+	const results = [];
+	const seen = new Set([input]);
+
+	function explore(text, path, depth) {
+		if (depth >= maxDepth) return;
+		for (const method of AUTO_DECODE_METHODS) {
+			let out;
+			try {
+				out = encoding[method].decode(text);
+			} catch {
+				continue;
+			}
+			if (!out || seen.has(out)) continue;
+			seen.add(out);
+			const newPath = [...path, method];
+			const score = printableScore(out);
+			if (score >= minScore) results.push({ value: out, path: newPath, score });
+			explore(out, newPath, depth + 1); // garbage-looking output can still decode further
+		}
+	}
+
+	explore(input, [], 0);
+	return results.sort((a, b) => b.score - a.score || a.path.length - b.path.length).slice(0, 8);
+}

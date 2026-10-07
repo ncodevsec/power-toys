@@ -62,3 +62,54 @@ export function PatternsProvider({ children }) {
 	);
 	return <PatternsContext.Provider value={value}>{children}</PatternsContext.Provider>;
 }
+
+/* ─── Generic array-of-items config (shared shape for Custom Patterns and
+   Sensitive Paths): fetched from a bundled config/*.json file, overridable
+   and persisted via chrome.storage, editable from Settings. ─────────────── */
+function makeListConfig({ storageKey, defaultsFile, defaultsField }) {
+	const Context = createContext(null);
+
+	function Provider({ children }) {
+		const [defaults, setDefaults] = useState([]);
+		const [items, setItems] = useState([]);
+
+		useEffect(() => {
+			(async () => {
+				let base = [];
+				try {
+					const res = await fetch(getURL(`config/${defaultsFile}`));
+					const json = await res.json();
+					base = json[defaultsField] || [];
+				} catch {}
+				setDefaults(base);
+				const sync = await storage.get("sync", [storageKey]);
+				const local = sync?.[storageKey] ? sync : await storage.get("local", [storageKey]);
+				setItems(local?.[storageKey] || base);
+			})();
+		}, []);
+
+		const save = useCallback(async (next) => {
+			storage.set("sync", { [storageKey]: next }); // may exceed sync quota; local is the source of truth
+			await storage.set("local", { [storageKey]: next });
+			setItems(next);
+		}, []);
+
+		const value = useMemo(() => ({ items, defaults, save, reset: () => save(defaults) }), [items, defaults, save]);
+		return <Context.Provider value={value}>{children}</Context.Provider>;
+	}
+
+	return { Provider, useConfig: () => useContext(Context) };
+}
+
+/* ─── Custom patterns: user-named regexes matched against already-collected
+   page data (link URLs, secret values/comments). Used for CTF flag
+   detection and any other ad-hoc "find this pattern" need. ─────────────── */
+const customPatternsConfig = makeListConfig({ storageKey: "customPatterns", defaultsFile: "custom-patterns.json", defaultsField: "patterns" });
+export const CustomPatternsProvider = customPatternsConfig.Provider;
+export const useCustomPatterns = customPatternsConfig.useConfig;
+
+/* ─── Sensitive paths: candidate paths checked against the current domain
+   by the Recon "Paths" sub-tab. ──────────────────────────────────────────── */
+const sensitivePathsConfig = makeListConfig({ storageKey: "sensitivePaths", defaultsFile: "sensitive-paths.json", defaultsField: "paths" });
+export const SensitivePathsProvider = sensitivePathsConfig.Provider;
+export const useSensitivePaths = sensitivePathsConfig.useConfig;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "../components/AppHeader.jsx";
 import { Badge, Button, CopyButton, IconButton, Textarea } from "../components/ui/index.js";
-import { METHODS } from "../tabs/CipherTab.jsx";
+import { METHODS } from "../lib/encoding.js";
 import { encoding } from "../lib/encoding.js";
 import { getURL, sendMessage, storage } from "../lib/browser.js";
 import { useToast } from "../providers.jsx";

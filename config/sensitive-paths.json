@@ -1,0 +1,13 @@
+{
+	"paths": [
+		".git/config", ".git/HEAD", ".svn/entries", ".env", ".env.local", ".env.production",
+		"wp-config.php.bak", "config.php.bak", "web.config", ".htaccess", ".htpasswd",
+		"backup.zip", "backup.sql", "backup.tar.gz", "database.sql", "dump.sql",
+		".aws/credentials", ".ssh/id_rsa", ".DS_Store", ".npmrc",
+		"composer.json", "package.json", "yarn.lock",
+		"swagger.json", "swagger-ui.html", "api-docs", "openapi.json", "graphql",
+		".well-known/security.txt", "robots.txt", "sitemap.xml",
+		"server-status", "server-info", "phpinfo.php", "actuator/health", "actuator/env",
+		"debug", "console", ".git/logs/HEAD", "crossdomain.xml", "clientaccesspolicy.xml"
+	]
+}

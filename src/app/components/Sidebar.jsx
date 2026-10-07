@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Icon } from "./ui/index.js";
 import { cx } from "../lib/utils.js";
-import { TOP_TABS, RECON_SUBTABS, SETTINGS_SECTIONS } from "../lib/navigation.js";
+import { TOP_TABS, RECON_SUBTABS, CIPHER_SUBTABS, SETTINGS_SECTIONS } from "../lib/navigation.js";
 
-const STANDALONE_ITEMS = TOP_TABS.filter((t) => t.id !== "recon");
+const ACCORDION_GROUPS = [
+	{ id: "recon", icon: "eye", label: "Recon", items: RECON_SUBTABS },
+	{ id: "cipher", icon: "lock", label: "Cipher", items: CIPHER_SUBTABS },
+];
+const STANDALONE_ITEMS = TOP_TABS.filter((t) => !ACCORDION_GROUPS.some((g) => g.id === t.id));
 
 function NavLink({ icon, label, active, onClick, indent }) {
 	return (
@@ -22,35 +26,46 @@ function NavLink({ icon, label, active, onClick, indent }) {
 	);
 }
 
-/** Accordion group header (Recon) — toggles open/closed, never itself
- * navigable, matching how category headers behave in most docs sidebars. */
-function AccordionHeader({ icon, label, open, onToggle }) {
+/** Collapsible nav group (Recon, Cipher) — the header only toggles
+ * open/closed, it's never itself navigable, matching how category headers
+ * behave in most docs sidebars. Its children spread open/closed via a CSS
+ * grid-rows transition. */
+function AccordionGroup({ icon, label, items, active, activeSub, onSelect, defaultOpen = true }) {
+	const [open, setOpen] = useState(defaultOpen);
 	return (
-		<button
-			type="button"
-			aria-expanded={open}
-			onClick={onToggle}
-			className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-muted transition hover:bg-surface-2 hover:text-fg"
-		>
-			<span className="flex items-center gap-2.5">
-				<Icon name={icon} size={15} />
-				{label}
-			</span>
-			<Icon name="chevron" size={13} className={cx("transition-transform", open && "rotate-180")} />
-		</button>
+		<div>
+			<button
+				type="button"
+				aria-expanded={open}
+				onClick={() => setOpen((v) => !v)}
+				className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-muted transition hover:bg-surface-2 hover:text-fg"
+			>
+				<span className="flex items-center gap-2.5">
+					<Icon name={icon} size={15} />
+					{label}
+				</span>
+				<Icon name="chevron" size={13} className={cx("transition-transform", open && "rotate-180")} />
+			</button>
+			<div className={cx("grid transition-all duration-200 ease-out", open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+				<div className="overflow-hidden">
+					<div className="space-y-0.5 pt-0.5">
+						{items.map((item) => (
+							<NavLink key={item.id} indent icon={item.icon} label={item.label} active={active && activeSub === item.id} onClick={() => onSelect(item.id)} />
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }
 
 /**
  * Full-tab-only left navigation, replacing the popup's horizontal tab bar.
- * Recon is a collapsible accordion (its three sub-views spread open below
- * it) rather than always-expanded, since collapsing it frees up room for
- * everything else. While Settings is open, the whole nav swaps to Settings'
- * own sections instead of the main app's tabs.
+ * Recon and Cipher are collapsible accordion groups (their sub-views spread
+ * open below them) rather than always-expanded. While Settings is open, the
+ * whole nav swaps to Settings' own sections instead of the main app's tabs.
  */
-export function Sidebar({ showSettings, tab, reconSubTab, onSelectRecon, onSelectTab, settingsSection, onSelectSettingsSection }) {
-	const [reconOpen, setReconOpen] = useState(true);
-
+export function Sidebar({ showSettings, tab, reconSubTab, cipherSubTab, onSelectRecon, onSelectCipher, onSelectTab, settingsSection, onSelectSettingsSection }) {
 	return (
 		<nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line bg-surface-2/40 px-3 py-4">
 			{showSettings ? (
@@ -64,18 +79,9 @@ export function Sidebar({ showSettings, tab, reconSubTab, onSelectRecon, onSelec
 				</div>
 			) : (
 				<>
-					<div>
-						<AccordionHeader icon="eye" label="Recon" open={reconOpen} onToggle={() => setReconOpen((v) => !v)} />
-						<div className={cx("grid transition-all duration-200 ease-out", reconOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
-							<div className="overflow-hidden">
-								<div className="space-y-0.5 pt-0.5">
-									{RECON_SUBTABS.map((item) => (
-										<NavLink key={item.id} indent icon={item.icon} label={item.label} active={tab === "recon" && reconSubTab === item.id} onClick={() => onSelectRecon(item.id)} />
-									))}
-								</div>
-							</div>
-						</div>
-					</div>
+					<AccordionGroup icon="eye" label="Recon" items={RECON_SUBTABS} active={tab === "recon"} activeSub={reconSubTab} onSelect={onSelectRecon} />
+					<div className="h-px bg-line" />
+					<AccordionGroup icon="lock" label="Cipher" items={CIPHER_SUBTABS} active={tab === "cipher"} activeSub={cipherSubTab} onSelect={onSelectCipher} defaultOpen={false} />
 					<div className="h-px bg-line" />
 					<div className="space-y-0.5">
 						{STANDALONE_ITEMS.map((item) => (

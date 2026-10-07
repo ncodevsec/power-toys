@@ -10,7 +10,7 @@
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-yellow?logo=firefox&logoColor=white)](https://addons.mozilla.org)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen)](https://developer.chrome.com/docs/extensions/mv3/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.9.0-informational)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.0-informational)](package.json)
 
 ---
 
@@ -33,6 +33,10 @@ Quickly extract links, encode/decode data, and simplify everyday security tasks 
 | **Settings Management**      | Import/export configurations for easy sharing and backup                      |
 | **Dark Mode Support**        | Light and dark theme options for comfortable browsing                         |
 | **Context Menu Integration** | Right-click access to quick tools and functions                               |
+| **Cookie & Storage Editors** | View, add, edit, delete, export, and import cookies and Web Storage           |
+| **Crypto Toolkit**           | Auto-decode, JWT inspection, and hash identification alongside encode/decode  |
+| **Recon Checks**             | Sensitive-path probing (with GraphQL introspection) and security header scan  |
+| **Custom Patterns**          | Named regex rules — including CTF flag detection — matched against findings   |
 | **Lightweight & Fast**       | Minimal performance impact with instant results                               |
 
 ## Project Architecture
@@ -199,15 +203,14 @@ Automated detection of hardcoded secrets and sensitive patterns:
 ### 7. **User Interface Features**
 
 - **Navigation**:
-    - Popup: a top tab bar with Recon, Bulk Opener, Cipher, and Cookies; Recon shows Links/Params/Secrets as a second row of sub-tabs
-    - Full tab: a left sidebar instead of the top tab bar, with Links/Params/Secrets nested under a "Recon" section
-    - Links — Extract and analyze page links
-    - Params — Detect sensitive parameters
-    - Secrets — Analyze hardcoded secrets
+    - Popup: a top tab bar with Recon, Cipher, Bulk Opener, Storage, and Cookies; Recon and Cipher each show a second row of sub-tabs
+    - Full tab: a full-height left sidebar instead of the top tab bar, with Recon and Cipher as collapsible accordion groups
+    - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check)
+    - **Cipher** (crypto/encoding toolkit): Encode/Decode, Auto Decode, JWT, Hash ID
     - Bulk Opener — Open many URLs at once, by tab, by window, or grouped by domain
-    - Cipher — Encoding/decoding tools
+    - Storage — View, add, edit, delete, export, and import localStorage/sessionStorage for the current site
     - Cookies — View, add, edit, delete, export, and import cookies for the current site
-    - Settings — Configuration and pattern management (gear icon in the header)
+    - Settings — gear icon in the header, becomes a back arrow while open; five sections covering every piece of configuration (General, URL Patterns, Parameter Keywords, Custom Patterns, Sensitive Paths)
 - **Dark Mode Support** — Automatically respects system preferences
 - **Responsive Design** — Works seamlessly on different screen sizes
 - **Toast Notifications** — Non-intrusive feedback for user actions
@@ -225,6 +228,42 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - Add, edit, and delete cookies directly (name, value, domain, path, SameSite, Secure, HttpOnly, expiration)
 - Export the current site's cookies to a JSON file, or import a previously exported file
 - Cookie names are checked against the same sensitive-keyword list used for parameters
+
+### 10. **Web Storage Inspector**
+
+- View, add, edit, and delete localStorage and sessionStorage entries for the current site
+- Export/import either storage area as JSON
+- Live editing requires the popup on the actual page (Web Storage has no privileged browser API like cookies do); the full-tab view shows a read-only snapshot taken when it was opened
+
+### 11. **Hash Identifier**
+
+- Identifies likely algorithms (MD5, SHA-1/256/384/512, bcrypt, Argon2, and more) from a hash's length and format
+- Hash identification is inherently ambiguous — results are candidates, not certainties
+
+### 12. **Auto Decode**
+
+- Tries Base64, URL, HTML entity, Hex, and Unicode decoding, chained up to three layers deep
+- Scores each candidate result by how "printable" it looks and returns the best matches, so you don't have to guess the encoding chain by hand
+
+### 13. **JWT Decoder**
+
+- Decodes a JWT's header and payload without needing the signing key
+- Flags `alg: none`, algorithm-confusion-prone algorithms, missing signatures, and expired/missing `exp` claims
+
+### 14. **Custom Patterns (incl. CTF Flags)**
+
+- Define named regex rules in Settings (ships with CTF-flag patterns like `flag{...}` pre-configured)
+- Matched against every discovered link and secret; results show up as their own category on the Secrets tab
+- Use this for flag formats, internal token formats, or anything else you want flagged automatically
+
+### 15. **Sensitive Paths & Security Headers**
+
+- **Paths**: probes a configurable list of common sensitive paths (`.git/config`, `.env`, backup files, API docs, `/graphql`, etc.) against the current site, and offers a one-click GraphQL introspection check when a GraphQL endpoint is found
+- **Headers**: fetches the current page and checks for CSP, HSTS, X-Frame-Options, and other security headers, flagging which recommended ones are missing
+
+### 16. **Export to Burp / Postman**
+
+- Export the current (filtered) link list as a Postman collection or a Burp Suite sitemap XML file, ready to import into either tool for deeper testing
 
 ## Technical Details
 
@@ -266,6 +305,18 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### v1.0.0
+
+- Added a Storage tab: view/add/edit/delete/export/import localStorage and sessionStorage
+- Cipher is now a group tab with Encode/Decode, Auto Decode, JWT, and Hash ID sub-tabs
+- Added Recon → Paths: probes common sensitive paths, with a one-click GraphQL introspection check
+- Added Recon → Headers: checks the page's security headers (CSP, HSTS, X-Frame-Options, etc.)
+- Added Custom Patterns in Settings — named regex rules (CTF flag patterns included by default) matched against discovered links/secrets, shown as a new category on the Secrets tab
+- Added Sensitive Paths list to Settings, used by the new Paths checker
+- Settings redesigned with five sections: General, URL Patterns, Parameter Keywords, Custom Patterns, Sensitive Paths
+- Added Postman/Burp sitemap export for the current link list
+- Full-tab sidebar now has two accordion groups (Recon, Cipher)
 
 ### v0.9.0
 

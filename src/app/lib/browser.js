@@ -35,12 +35,15 @@ export const openTab = (url) => api().tabs.create({ url });
 export const activeTab = async () =>
 	(await call(api().tabs.query.bind(api().tabs), { active: true, currentWindow: true }))?.[0];
 
-/** Run a self-contained function inside a tab and return its result. */
-export const runInTab = async (tabId, func) =>
+/** Run a self-contained function inside a tab and return its result.
+ * `args` are passed through to the injected function (and must be
+ * JSON-serializable, same constraint as the rest of the scripting API). */
+export const runInTab = async (tabId, func, args = []) =>
 	(
 		await call(api().scripting.executeScript.bind(api().scripting), {
 			target: { tabId },
 			func,
+			args,
 		})
 	)?.[0]?.result;
 
