@@ -11,7 +11,7 @@ export function Tabs({ items, value, onChange, variant = "pill", className }) {
 		<div
 			role="tablist"
 			className={cx(
-				pill ? "flex gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1 shadow-card" : "flex flex-wrap gap-1.5",
+				pill ? "flex overflow-x-auto rounded-full border border-line bg-surface shadow-card" : "flex flex-wrap gap-1.5",
 				className,
 			)}
 		>
@@ -25,7 +25,7 @@ export function Tabs({ items, value, onChange, variant = "pill", className }) {
 						onClick={() => onChange(t.id)}
 						className={cx(
 							"inline-flex items-center gap-1.5 whitespace-nowrap font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25",
-							pill ? "flex-1 justify-center rounded-xl px-3 py-2 text-[13px]" : "rounded-full border px-3 py-1 text-xs",
+							pill ? "flex-1 justify-center px-3 py-2 text-[13px]" : "rounded-full border px-3 py-1 text-xs",
 							pill
 								? active ? "bg-brand text-white shadow" : "text-muted hover:bg-surface-2 hover:text-fg"
 								: active ? "border-brand/40 bg-brand-soft text-brand-ink" : "border-line text-muted hover:border-brand/40 hover:text-fg",

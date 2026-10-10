@@ -14,7 +14,6 @@ import HashIdPanel from "./cipher/HashIdPanel.jsx";
 export default function CipherTab({ mode, onModeChange, fullTab }) {
 	return (
 		<div className="space-y-3">
-			{!fullTab && <Tabs variant="chip" items={CIPHER_SUBTABS} value={mode} onChange={onModeChange} />}
 			<Card>
 				<div className="p-4">
 					{mode === "encode" && <EncodeDecodePanel />}
