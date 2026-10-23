@@ -30,5 +30,8 @@ export async function checkSecurityHeaders(url) {
 	const all = headersToObject(res.headers);
 	const rows = SECURITY_HEADERS.map((h) => ({ ...h, value: all[h.key] ?? null }));
 	const extra = Object.entries(all).filter(([k]) => !SECURITY_HEADERS.some((h) => h.key === k));
-	return { status: res.status, rows, extra };
+	return { url, status: res.status, rows, extra, all };
 }
+
+/** A curl command that reproduces the request the header check makes. */
+export const toCurl = (url) => `curl -i -s -X GET '${url.replace(/'/g, "'\\''")}'`;

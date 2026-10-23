@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Card, CardHeader, Code, EmptyState, Field, Input, Modal, SearchInput, Select, Spinner, Toggle } from "../components/ui/index.js";
+import { Badge, Button, Card, CardHeader, Code, CopyButton, EmptyState, Field, Input, Modal, SearchInput, Select, Spinner, Toggle } from "../components/ui/index.js";
 import { ResultCount, Toolbar } from "../components/Toolbar.jsx";
 import { activeTab, cookies as cookiesApi } from "../lib/browser.js";
 import { cookieUrl, emptyCookie, formatExpiry, fromDatetimeLocal, toDatetimeLocal } from "../lib/cookies.js";
@@ -214,6 +214,7 @@ export default function CookiesTab({ domain }) {
 									</div>
 								</div>
 								<div className="flex shrink-0 gap-1.5">
+									<CopyButton size="xs" label="" getText={() => c.value} empty="Empty value" />
 									<Button size="xs" icon="edit" onClick={() => openEdit(c)}>Edit</Button>
 									<Button size="xs" icon="trash" onClick={() => setDeleting(c)}>Delete</Button>
 								</div>

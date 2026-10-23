@@ -8,7 +8,9 @@
 		"scripting",
 		"storage",
 		"contextMenus",
-		"cookies"
+		"cookies",
+		"alarms",
+		"clipboardWrite"
 	],
 	"host_permissions": [
 		"<all_urls>"
@@ -30,6 +32,19 @@
 			"16": "assets/images/power-toys-16.png",
 			"48": "assets/images/power-toys-48.png",
 			"128": "assets/images/power-toys-128.png"
+		}
+	},
+	"commands": {
+		"open-palette": {
+			"suggested_key": { "default": "Ctrl+Shift+K", "mac": "Command+Shift+K" },
+			"description": "Open the command palette"
+		},
+		"auto-decode-selection": {
+			"suggested_key": { "default": "Ctrl+Shift+D", "mac": "Command+Shift+D" },
+			"description": "Auto-decode the selected text"
+		},
+		"open-full-tab": {
+			"description": "Open Power Toys in a full tab"
 		}
 	},
 	"content_security_policy": {

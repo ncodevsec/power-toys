@@ -206,7 +206,7 @@ Automated detection of hardcoded secrets and sensitive patterns:
     - Popup: a top tab bar with Recon, Cipher, Bulk Opener, Storage, and Cookies; Recon and Cipher each show a second row of sub-tabs
     - Full tab: a full-height left sidebar instead of the top tab bar, with Recon and Cipher as collapsible accordion groups
     - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check)
-    - **Cipher** (crypto/encoding toolkit): Encode/Decode, Auto Decode, JWT, Hash ID
+    - **Cipher** (crypto/encoding toolkit): Encode/Decode (with Auto Decode and 20+ encodings, classic ciphers and hashes), JWT, Hash ID
     - Bulk Opener — Open many URLs at once, by tab, by window, or grouped by domain
     - Storage — View, add, edit, delete, export, and import localStorage/sessionStorage for the current site
     - Cookies — View, add, edit, delete, export, and import cookies for the current site
@@ -306,10 +306,20 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 
 ## Changelog
 
+### v1.0.0 (update batch)
+
+- PNG logo; Path Finder now runs in the background with progress, Cancel, a rate limit and an icon badge
+- Full-tab quick panel (background scan, latest findings, pinned tools)
+- Link favicons; Link list sorting, selection, open all/selected, duplicate removal, CSV/JSON export
+- Auto Decode merged into Encode/Decode; 22 encodings, classic ciphers and hashes; copy-as, swap, paste & process
+- Command palette (Ctrl/Cmd+K), keyboard shortcuts, auto-decode selected text, new context-menu page/link actions
+- History for Cipher and Path Finder; Cipher Utilities (formatter, diff, epoch, UUID, regex)
+- Header tool: copy as cURL, export JSON, present/missing highlighting; redesigned Settings → General; first-run tips
+
 ### v1.0.0
 
 - Added a Storage tab: view/add/edit/delete/export/import localStorage and sessionStorage
-- Cipher is now a group tab with Encode/Decode, Auto Decode, JWT, and Hash ID sub-tabs
+- Cipher is now a group tab with Encode/Decode, JWT, and Hash ID sub-tabs
 - Added Recon → Paths: probes common sensitive paths, with a one-click GraphQL introspection check
 - Added Recon → Headers: checks the page's security headers (CSP, HSTS, X-Frame-Options, etc.)
 - Added Custom Patterns in Settings — named regex rules (CTF flag patterns included by default) matched against discovered links/secrets, shown as a new category on the Secrets tab

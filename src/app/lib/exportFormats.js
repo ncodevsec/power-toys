@@ -60,3 +60,11 @@ export function downloadText(text, filename, mime = "text/plain") {
 	a.remove();
 	URL.revokeObjectURL(url);
 }
+
+const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+/** CSV with a header row: url, domain, path, category, sensitive. */
+export function toCsv(links, isSensitive = () => false) {
+	const rows = links.map((l) => [l.fullUrl, l.domain, l.path, l.category, isSensitive(l.fullUrl) ? "yes" : "no"].map(csvCell).join(","));
+	return ["url,domain,path,category,sensitive", ...rows].join("\n");
+}

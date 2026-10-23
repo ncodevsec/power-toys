@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Card, CardHeader, Code, EmptyState, Field, Input, Modal, SearchInput, Spinner, Tabs } from "../components/ui/index.js";
+import { Badge, Button, Card, CardHeader, Code, CopyButton, EmptyState, Field, Input, Modal, SearchInput, Spinner, Tabs } from "../components/ui/index.js";
 import { ResultCount, Toolbar } from "../components/Toolbar.jsx";
 import { useWebStorage } from "../hooks/useWebStorage.js";
 import { downloadJson, pickJsonFile } from "../lib/utils.js";
@@ -123,12 +123,13 @@ export default function StorageTab({ domain, fullTab }) {
 									</div>
 									<Code className="ml-3.5">{(item.value || "").length > 120 ? item.value.slice(0, 120) + "…" : item.value || "(empty)"}</Code>
 								</div>
-								{editable && (
-									<div className="flex shrink-0 gap-1.5">
+								<div className="flex shrink-0 gap-1.5">
+									<CopyButton size="xs" label="" getText={() => item.value} empty="Empty value" />
+									{editable && <>
 										<Button size="xs" icon="edit" onClick={() => openEdit(item)}>Edit</Button>
 										<Button size="xs" icon="trash" onClick={() => setDeleting(item)}>Delete</Button>
-									</div>
-								)}
+									</>}
+								</div>
 							</li>
 						))}
 					</ul>

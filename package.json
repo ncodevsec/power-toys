@@ -9,7 +9,8 @@
 		"preview": "node build.js --preview",
 		"preview:watch": "node build.js --preview --watch",
 		"watch": "node build.js --watch",
-		"watch:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/main.css --watch"
+		"watch:css": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./src/styles/main.css --watch",
+		"package": "node build.js && cd dist/chrome && zip -r ../power-toys-chrome.zip . -x \"*.DS_Store\""
 	},
 	"keywords": [
 		"security",

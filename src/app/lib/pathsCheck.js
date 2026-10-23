@@ -1,32 +1,23 @@
-/** Probes a list of candidate paths against a base URL, a handful at a
- * time, and reports which respond as present. */
-export async function checkPaths(baseUrl, paths, { concurrency = 6, timeoutMs = 6000, onProgress } = {}) {
-	const base = baseUrl.replace(/\/$/, "");
-	const results = [];
-	let i = 0;
-	let done = 0;
-
-	async function worker() {
-		while (i < paths.length) {
-			const path = paths[i++];
-			const url = `${base}/${path.replace(/^\//, "")}`;
-			let entry;
-			try {
-				const controller = new AbortController();
-				const timer = setTimeout(() => controller.abort(), timeoutMs);
-				const res = await fetch(url, { method: "GET", signal: controller.signal, credentials: "omit" });
-				clearTimeout(timer);
-				entry = { path, url, status: res.status, found: res.status >= 200 && res.status < 400 };
-			} catch {
-				entry = { path, url, status: null, found: false, error: true };
-			}
-			results.push(entry);
-			onProgress?.(++done, paths.length);
-		}
+/** Probes one candidate path against a base URL. Never throws: a network
+ * error or timeout becomes `{ found: false, error: true }`. */
+export async function probePath(baseUrl, path, { timeoutMs = 6000, signal } = {}) {
+	const url = `${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+	const controller = new AbortController();
+	const onAbort = () => controller.abort();
+	signal?.addEventListener("abort", onAbort);
+	const timer = setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		const res = await fetch(url, { method: "GET", signal: controller.signal, credentials: "omit", redirect: "manual" });
+		// redirect:"manual" yields an opaque-redirect (status 0) for 3xx — treat as found.
+		const redirected = res.type === "opaqueredirect";
+		const status = redirected ? 302 : res.status;
+		return { path, url, status, found: status >= 200 && status < 400 };
+	} catch {
+		return { path, url, status: null, found: false, error: true };
+	} finally {
+		clearTimeout(timer);
+		signal?.removeEventListener("abort", onAbort);
 	}
-
-	await Promise.all(Array.from({ length: Math.min(concurrency, paths.length || 1) }, worker));
-	return results.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 /** Sends a minimal introspection query to a suspected GraphQL endpoint. */

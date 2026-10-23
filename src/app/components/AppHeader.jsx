@@ -1,4 +1,5 @@
 import { Icon, IconButton } from "./ui/index.js";
+import { Logo } from "./Logo.jsx";
 import { cx } from "../lib/utils.js";
 
 const THEMES = [["system", "monitor"], ["light", "sun"], ["dark", "moon"]];
@@ -32,7 +33,7 @@ export function AppHeader({ title, accent, subtitle, actions, className }) {
 			<div className="pointer-events-none absolute -right-12 -top-20 size-56 rounded-full bg-brand/20 blur-3xl" />
 			<div className="relative flex items-center justify-between gap-3">
 				<div className="flex min-w-0 items-center gap-3">
-					<div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white shadow-sm"><Icon name="zap" size={22} strokeWidth={2.4} /></div>
+					<Logo size={44} />
 					<div className="min-w-0">
 						<h1 className="text-xl font-extrabold leading-tight tracking-tight text-fg">
 							{title}

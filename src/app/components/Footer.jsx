@@ -31,6 +31,7 @@ export function Footer() {
 			<div className="text-center">
 				<p className="text-xs font-semibold text-muted">Power Toys v{getVersion()}</p>
 				<p className="mt-0.5 text-[11px] text-subtle">A bug hunting toolkit, built for pentesters and bug hunters</p>
+				<p className="mt-0.5 text-[11px] text-subtle">All processing happens locally in your browser.</p>
 			</div>
 		</footer>
 	);

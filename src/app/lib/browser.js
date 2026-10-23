@@ -25,6 +25,7 @@ export const getVersion = () => api().runtime.getManifest().version;
 export const storage = {
 	get: (area, keys) => call(api().storage[area].get.bind(api().storage[area]), keys),
 	set: (area, data) => call(api().storage[area].set.bind(api().storage[area]), data),
+	remove: (area, keys) => call(api().storage[area].remove.bind(api().storage[area]), keys),
 };
 
 export const sendMessage = (msg) =>
@@ -51,4 +52,19 @@ export const cookies = {
 	getAll: (details) => call(api().cookies.getAll.bind(api().cookies), details),
 	set: (details) => call(api().cookies.set.bind(api().cookies), details),
 	remove: (details) => call(api().cookies.remove.bind(api().cookies), details),
+};
+
+/** Subscribe to chrome.storage changes; returns an unsubscribe function.
+ * No-op where the API is missing (e.g. the static design preview). */
+export const onStorageChanged = (cb) => {
+	const ev = api().storage?.onChanged;
+	if (!ev) return () => {};
+	ev.addListener(cb);
+	return () => ev.removeListener(cb);
+};
+
+/** Shortcuts declared in the manifest `commands` block, with their current binding. */
+export const getCommands = async () => {
+	const fn = api().commands?.getAll;
+	return fn ? (await call(fn.bind(api().commands))) || [] : [];
 };

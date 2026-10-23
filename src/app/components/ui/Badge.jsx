@@ -3,6 +3,7 @@ import { cx } from "../../lib/utils.js";
 const TONES = {
 	brand: "bg-brand-soft text-brand-ink",
 	muted: "bg-surface-2 text-muted",
+	ok: "bg-ok/15 text-ok",
 	danger: "bg-brand text-white",
 	// Theme-adaptive instead of hardcoded white — a fixed white-on-white chip
 	// disappears in the light theme. bg-fg/10 + text-fg tracks whichever

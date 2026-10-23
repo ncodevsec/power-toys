@@ -1,26 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Field, GithubGlyph, Icon, Input, Modal, Tabs, Textarea } from "../components/ui/index.js";
-import { getVersion, openTab } from "../lib/browser.js";
-import { cx, downloadJson, pickJsonFile } from "../lib/utils.js";
+import { Badge, Button, Field, Input, Modal, Tabs, Textarea } from "../components/ui/index.js";
+import GeneralSettings from "./settings/GeneralSettings.jsx";
+import { cx } from "../lib/utils.js";
 import { SETTINGS_SECTIONS } from "../lib/navigation.js";
 import { usePatterns, useCustomPatterns, useSensitivePaths, useToast } from "../providers.jsx";
-
-/** A single labeled row with a leading icon chip and a trailing action — the
- * settings-app list pattern (macOS/iOS Settings), used for General items. */
-function SettingRow({ icon, glyph, label, hint, action }) {
-	return (
-		<div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface-2/60 px-4 py-3">
-			<div className="flex min-w-0 items-center gap-3">
-				<span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-ink">{glyph ?? <Icon name={icon} size={16} />}</span>
-				<div className="min-w-0">
-					<p className="truncate text-sm font-semibold">{label}</p>
-					{hint && <p className="truncate text-xs text-muted">{hint}</p>}
-				</div>
-			</div>
-			<div className="shrink-0">{action}</div>
-		</div>
-	);
-}
 
 function PatternEditor({ isUrls, value, onChange, count, unit }) {
 	return (
@@ -184,66 +167,6 @@ function SensitivePathsSection() {
 	);
 }
 
-/* ─── General section ───────────────────────────────────────────────────── */
-function GeneralSection({ patternsRaw, customItems, pathsItems }) {
-	const toast = useToast();
-
-	const exportAll = () => downloadJson(
-		{ sensitivePatterns: patternsRaw, customPatterns: customItems, sensitivePaths: pathsItems },
-		`power-toys-settings-${Date.now()}.json`,
-	);
-
-	const importAll = async () => {
-		try {
-			const data = await pickJsonFile();
-			if (!data) return;
-			toast("Imported settings file loaded — open each section to review and save.", "info");
-			// Each section reads its own slice from storage on next load; a full
-			// cross-section import-and-apply is intentionally out of scope here
-			// to avoid silently overwriting one section while editing another.
-			void data;
-		} catch {
-			toast("Error reading settings file!", "error");
-		}
-	};
-
-	return (
-		<div className="space-y-4">
-			<div className="flex items-center gap-3.5 rounded-2xl border border-line bg-surface-2/60 p-4">
-				<div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand text-white shadow-sm"><Icon name="zap" size={22} strokeWidth={2.4} /></div>
-				<div className="min-w-0">
-					<p className="text-base font-extrabold leading-tight">Power Toys</p>
-					<div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
-						<Badge>v{getVersion()}</Badge>
-						<span>by nCodevSec</span>
-					</div>
-				</div>
-			</div>
-
-			<div className="space-y-2">
-				<SettingRow
-					glyph={<GithubGlyph size={16} />}
-					label="View source on GitHub"
-					hint="github.com/ncodevsec/power-toys"
-					action={<Button size="xs" icon="external" onClick={() => openTab("https://github.com/ncodevsec/power-toys")}>Open</Button>}
-				/>
-				<SettingRow
-					icon="download"
-					label="Export all settings"
-					hint="Sensitive patterns, custom patterns, and sensitive paths"
-					action={<Button size="xs" onClick={exportAll}>Export</Button>}
-				/>
-				<SettingRow
-					icon="upload"
-					label="Import settings"
-					hint="Review and save each section after importing"
-					action={<Button size="xs" onClick={importAll}>Import</Button>}
-				/>
-			</div>
-		</div>
-	);
-}
-
 /**
  * `section`/`onSectionChange` are controlled from the parent (App.jsx) so
  * the same selection can drive two different navigation presentations:
@@ -251,10 +174,8 @@ function GeneralSection({ patternsRaw, customItems, pathsItems }) {
  * (which replaces its own nav with these sections and renders nothing of
  * its own here — hence the `fullTab` flag to skip the tab bar in that case).
  */
-export default function SettingsTab({ section, onSectionChange, fullTab }) {
+export default function SettingsTab({ section, onSectionChange, fullTab, theme, onThemeChange }) {
 	const { raw, save, reset } = usePatterns();
-	const custom = useCustomPatterns();
-	const sensitivePaths = useSensitivePaths();
 	const toast = useToast();
 	const [params, setParams] = useState("");
 	const [urls, setUrls] = useState("");
@@ -283,7 +204,7 @@ export default function SettingsTab({ section, onSectionChange, fullTab }) {
 			{!fullTab && <Tabs items={SETTINGS_SECTIONS} value={section} onChange={onSectionChange} />}
 
 			<div className={cx("space-y-4", fullTab && "max-w-2xl")}>
-				{section === "general" && <GeneralSection patternsRaw={raw} customItems={custom?.items} pathsItems={sensitivePaths?.items} />}
+				{section === "general" && <GeneralSettings theme={theme} onThemeChange={onThemeChange} />}
 
 				{section === "urls" && (
 					<>

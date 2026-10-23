@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Badge, Icon } from "../src/app/components/ui/index.js";
+import { Badge } from "../src/app/components/ui/index.js";
+import { Logo } from "../src/app/components/Logo.jsx";
 import { cx } from "../src/app/lib/utils.js";
 
 const VIEWS = [
@@ -15,7 +16,7 @@ export function PreviewShell({ children }) {
 			<div className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">
 				<div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-3">
 					<div className="flex items-center gap-2.5">
-						<span className="grid size-8 place-items-center rounded-xl bg-brand text-white"><Icon name="zap" size={16} /></span>
+						<Logo size={32} />
 						<div>
 							<p className="text-sm font-extrabold leading-tight">Power Toys — UI preview</p>
 							<p className="text-xs text-muted">Static build with example fixture data, not a live scan</p>

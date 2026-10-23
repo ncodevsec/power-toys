@@ -1,12 +1,12 @@
 import { Badge, Card, CardHeader, CopyButton } from "./ui/index.js";
-import { initialOf } from "../lib/utils.js";
+import { Favicon } from "./Favicon.jsx";
 
-/** Card with a domain avatar, a count badge and a "copy group" button. */
+/** Card with a domain favicon, a count badge and a "copy group" button. */
 export function DomainCard({ domain, count, unit, getCopyText, children }) {
 	return (
 		<Card>
 			<CardHeader
-				leading={<span className="grid size-6 shrink-0 place-items-center rounded-lg bg-brand text-[11px] font-extrabold text-white">{initialOf(domain)}</span>}
+				leading={<Favicon domain={domain} size={24} />}
 				title={domain}
 				actions={<><Badge>{count} {unit}</Badge><CopyButton label="" size="xs" getText={getCopyText} /></>}
 			/>

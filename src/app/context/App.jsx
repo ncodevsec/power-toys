@@ -1,26 +1,38 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "../components/AppHeader.jsx";
 import { Badge, Button, CopyButton, IconButton, Textarea } from "../components/ui/index.js";
-import { METHODS } from "../lib/encoding.js";
-import { encoding } from "../lib/encoding.js";
+import { METHODS, autoDecode, describePath, encoding } from "../lib/encoding.js";
 import { getURL, sendMessage, storage } from "../lib/browser.js";
 import { useToast } from "../providers.jsx";
 
-const methodLabel = (id) => METHODS.find(([m]) => m === id)?.[1] || id;
+const methodLabel = (id) => (id === "auto" ? "Auto Decode" : METHODS.find(([m]) => m === id)?.[1] || id);
+
+/** Runs one transform; "auto" picks the best readable decoding and reports
+ * which formats it unwrapped. Throws a readable Error on failure. */
+async function transform(d, text) {
+	if (d.method === "auto") {
+		const [best] = autoDecode(text);
+		if (!best) throw new Error("No readable decoding found for this text.");
+		return { out: best.value, note: describePath(best.path) };
+	}
+	return { out: await encoding[d.method][d.operation](text), note: "" };
+}
 
 export default function App() {
 	const toast = useToast();
 	const [data, setData] = useState(null); // { selectedText, method, operation }
 	const [output, setOutput] = useState("");
 	const [repeats, setRepeats] = useState(0);
+	const [note, setNote] = useState(""); // e.g. "Base64 → URL" after Auto Decode
 	const fullScreen = new URLSearchParams(location.search).has("selectedText");
 
 	useEffect(() => {
 		const run = (d) => {
-			if (!d?.selectedText || !encoding[d.method]?.[d.operation]) return;
+			if (!d?.selectedText || !(d.method === "auto" || encoding[d.method]?.[d.operation])) return;
 			setData(d);
-			try { setOutput(encoding[d.method][d.operation](d.selectedText)); }
-			catch (e) { setOutput(`Error: ${e.message}`); }
+			transform(d, d.selectedText)
+				.then((r) => { setOutput(r.out); setNote(r.note); })
+				.catch((e) => { setOutput(`Error: ${e.message}`); setNote(""); });
 		};
 		if (fullScreen) {
 			const p = new URLSearchParams(location.search);
@@ -33,9 +45,9 @@ export default function App() {
 		});
 	}, [fullScreen]);
 
-	const repeat = () => {
+	const repeat = async () => {
 		if (!data || !output.trim()) return toast("No output to repeat", "error");
-		try { setOutput(encoding[data.method][data.operation](output)); setRepeats((n) => n + 1); }
+		try { const r = await transform(data, output); setOutput(r.out); setNote(r.note); setRepeats((n) => n + 1); }
 		catch (e) { setOutput(`Error: ${e.message}`); }
 	};
 
@@ -49,7 +61,7 @@ export default function App() {
 		<div>
 			<AppHeader
 				title="Encode" accent="/Decode"
-				subtitle={data ? `${methodLabel(data.method)} · ${data.operation}` : "Waiting for selection…"}
+				subtitle={data ? (note ? `Auto Decode · ${note}` : `${methodLabel(data.method)} · ${data.operation}`) : "Waiting for selection…"}
 				actions={<>
 					{data && <Badge tone="solid">{data.operation}</Badge>}
 					{!fullScreen && <IconButton icon="maximize" label="Open full screen" onClick={openFull} />}

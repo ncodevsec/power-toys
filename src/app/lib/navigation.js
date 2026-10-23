@@ -18,9 +18,9 @@ export const RECON_SUBTABS = [
 
 export const CIPHER_SUBTABS = [
 	{ id: "encode", label: "Encode/Decode", icon: "lock" },
-	{ id: "auto", label: "Auto Decode", icon: "zap" },
 	{ id: "jwt", label: "JWT", icon: "key" },
 	{ id: "hash", label: "Hash ID", icon: "hash" },
+	{ id: "tools", label: "Utilities", icon: "sliders" },
 ];
 
 export const SETTINGS_SECTIONS = [
@@ -29,4 +29,12 @@ export const SETTINGS_SECTIONS = [
 	{ id: "params", label: "Parameter Keywords", icon: "sliders" },
 	{ id: "custom", label: "Custom Patterns", icon: "star" },
 	{ id: "paths", label: "Sensitive Paths", icon: "folder" },
+];
+
+/** Flat list of every navigable tool, keyed "recon:links" / "cipher:jwt" / "bulk".
+ * Used by the full-tab side panel (pinned tools) and, later, the command palette. */
+export const DESTINATIONS = [
+	...RECON_SUBTABS.map((t) => ({ ...t, key: `recon:${t.id}`, label: `Recon · ${t.label}` })),
+	...CIPHER_SUBTABS.map((t) => ({ ...t, key: `cipher:${t.id}`, label: `Cipher · ${t.label}` })),
+	...TOP_TABS.filter((t) => !["recon", "cipher"].includes(t.id)).map((t) => ({ ...t, key: t.id })),
 ];

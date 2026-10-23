@@ -44,12 +44,14 @@ window.chrome = {
 		local: {
 			get: (keys, cb) => cb(Object.fromEntries(keys.map((k) => [k, store.local[k]]).filter(([, v]) => v !== undefined))),
 			set: (data, cb) => { Object.assign(store.local, data); cb && cb(); },
+			remove: (keys, cb) => { [].concat(keys).forEach((k) => delete store.local[k]); cb && cb(); },
 		},
 		sync: {
 			get: (keys, cb) => cb(Object.fromEntries(keys.map((k) => [k, store.sync[k]]).filter(([, v]) => v !== undefined))),
 			set: (data, cb) => { Object.assign(store.sync, data); cb && cb(); },
 		},
 	},
+	commands: { getAll: (cb) => cb([{ name: "open-palette", description: "Open the command palette", shortcut: "Ctrl+Shift+K" }, { name: "auto-decode-selection", description: "Auto-decode the selected text", shortcut: "Ctrl+Shift+D" }]) },
 	tabs: {
 		query: (q, cb) => cb([{ id: 1, url: "https://app.example.com/dashboard" }]),
 		create: ({ url }) => window.open(url, "_blank"),
