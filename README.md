@@ -205,7 +205,7 @@ Automated detection of hardcoded secrets and sensitive patterns:
 - **Navigation**:
     - Popup: a top tab bar with Recon, Cipher, Utilities, Storage, and Cookies; Recon, Cipher and Utilities each show a second row of sub-tabs
     - Full tab: a full-height left sidebar instead of the top tab bar, with Recon and Cipher as collapsible accordion groups
-    - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check), Sitemap (records the site's requests while you browse)
+    - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check), Sitemap (records the site's requests while you browse, as a tree)
     - **Cipher** (crypto/encoding toolkit): Encode/Decode (with Auto Decode and 20+ encodings, classic ciphers and hashes), JWT, Hash ID
     - **Utilities**: Bulk Opener (open many URLs at once, by tab, by window, or grouped by domain), Formatter, Diff, Timestamp, UUID, Regex
     - Storage — View, add, edit, delete, export, and import localStorage/sessionStorage for the current site
@@ -311,7 +311,7 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - Fixed: editing a cookie no longer leaves a second copy behind (host-only cookies stay host-only; import too)
 - Link favicons fall back to a neutral globe icon instead of the domain's first letter
 - Utilities is now a main tab (Bulk Opener, Formatter, Diff, Timestamp, UUID, Regex); it moved out of Cipher, and Bulk Opener moved under it
-- Recon → Sitemap: a Start/Stop tracker that records pages, scripts, styles, XHR/fetch and other requests for the site while you browse (Burp-style), with type filters, search, and Postman/Burp export. Adds the `webRequest` permission
+- Recon → Sitemap: a Start/Stop tracker that records pages, scripts, styles, XHR/fetch and other requests for the site while you browse, shown as a Burp-style site map tree (host → folders → files, with expand/collapse and a request table for the selected branch), with type filters, search, and Postman/Burp export. Adds the `webRequest` permission
 
 ### v1.0.0 (update batch)
 

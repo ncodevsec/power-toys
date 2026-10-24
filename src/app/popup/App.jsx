@@ -118,7 +118,7 @@ export default function App({ fullTab = false }) {
 		<>
 			{reconSubTab === "paths" && <PathsTab domain={domain} autoRun={autoRun} />}
 			{reconSubTab === "headers" && <HeadersTab domain={domain} autoRun={autoRun} />}
-			{reconSubTab === "sitemap" && <SitemapTab domain={domain} />}
+			{reconSubTab === "sitemap" && <SitemapTab domain={domain} fullTab={fullTab} />}
 		</>
 	) : tab === "cipher" ? (
 		<CipherTab mode={cipherSubTab} onModeChange={setCipherSubTab} fullTab={fullTab} preset={cipherPreset} />
