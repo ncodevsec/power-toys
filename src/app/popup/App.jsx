@@ -9,7 +9,7 @@ import { Footer } from "../components/Footer.jsx";
 import { useTheme } from "../hooks/useTheme.js";
 import { usePageData } from "../hooks/usePageData.js";
 import { getURL, openTab } from "../lib/browser.js";
-import { TOP_TABS, RECON_SUBTABS, CIPHER_SUBTABS, DESTINATIONS } from "../lib/navigation.js";
+import { TOP_TABS, RECON_SUBTABS, CIPHER_SUBTABS, UTILITIES_SUBTABS, DESTINATIONS } from "../lib/navigation.js";
 import { CIPHERS } from "../lib/encoding.js";
 import { CIPHER_HISTORY_KEY, PATH_HISTORY_KEY } from "../lib/history.js";
 import { storage } from "../lib/browser.js";
@@ -19,7 +19,8 @@ import ParamsTab from "../tabs/ParamsTab.jsx";
 import SecretsTab from "../tabs/SecretsTab.jsx";
 import PathsTab from "../tabs/PathsTab.jsx";
 import HeadersTab from "../tabs/HeadersTab.jsx";
-import BulkTab from "../tabs/BulkTab.jsx";
+import SitemapTab from "../tabs/SitemapTab.jsx";
+import UtilitiesTab from "../tabs/UtilitiesTab.jsx";
 import CipherTab from "../tabs/CipherTab.jsx";
 import StorageTab from "../tabs/StorageTab.jsx";
 import CookiesTab from "../tabs/CookiesTab.jsx";
@@ -38,6 +39,7 @@ export default function App({ fullTab = false }) {
 	const [tab, setTab] = useState("recon");
 	const [reconSubTab, setReconSubTab] = useState("links");
 	const [cipherSubTab, setCipherSubTab] = useState("encode");
+	const [utilitiesSubTab, setUtilitiesSubTab] = useState("bulk");
 	const [showSettings, setShowSettings] = useState(false);
 	const [settingsSection, setSettingsSection] = useState("general");
 	const { status, links, secrets, domain } = usePageData({ fullTab });
@@ -58,12 +60,14 @@ export default function App({ fullTab = false }) {
 	const selectTab = (id) => { setShowSettings(false); setTab(id); };
 	const selectRecon = (subId) => { setShowSettings(false); setTab("recon"); setReconSubTab(subId); };
 	const selectCipher = (subId) => { setShowSettings(false); setTab("cipher"); setCipherSubTab(subId); };
+	const selectUtilities = (subId) => { setShowSettings(false); setTab("utilities"); setUtilitiesSubTab(subId); };
 
-	// "recon:paths" / "cipher:jwt" / "bulk" → the matching select* handler.
+	// "recon:paths" / "cipher:jwt" / "utilities:diff" → the matching select* handler.
 	const goTo = (key) => {
 		const [group, sub] = key.split(":");
 		if (group === "recon" && sub) selectRecon(sub);
 		else if (group === "cipher" && sub) selectCipher(sub);
+		else if (group === "utilities" && sub) selectUtilities(sub);
 		else selectTab(group);
 	};
 
@@ -114,12 +118,14 @@ export default function App({ fullTab = false }) {
 		<>
 			{reconSubTab === "paths" && <PathsTab domain={domain} autoRun={autoRun} />}
 			{reconSubTab === "headers" && <HeadersTab domain={domain} autoRun={autoRun} />}
+			{reconSubTab === "sitemap" && <SitemapTab domain={domain} />}
 		</>
 	) : tab === "cipher" ? (
 		<CipherTab mode={cipherSubTab} onModeChange={setCipherSubTab} fullTab={fullTab} preset={cipherPreset} />
+	) : tab === "utilities" ? (
+		<UtilitiesTab mode={utilitiesSubTab} />
 	) : (
 		<>
-			{tab === "bulk" && <BulkTab />}
 			{tab === "storage" && <StorageTab domain={domain} fullTab={fullTab} />}
 			{tab === "cookies" && <CookiesTab domain={domain} />}
 		</>
@@ -145,8 +151,10 @@ export default function App({ fullTab = false }) {
 						tab={tab}
 						reconSubTab={reconSubTab}
 						cipherSubTab={cipherSubTab}
+						utilitiesSubTab={utilitiesSubTab}
 						onSelectRecon={selectRecon}
 						onSelectCipher={selectCipher}
+						onSelectUtilities={selectUtilities}
 						onSelectTab={selectTab}
 						settingsSection={settingsSection}
 						onSelectSettingsSection={setSettingsSection}
@@ -161,6 +169,7 @@ export default function App({ fullTab = false }) {
 							<Tabs items={TOP_TABS} value={tab} onChange={selectTab} />
 							{tab === "recon" && <Tabs variant="chip" items={RECON_SUBTABS} value={reconSubTab} onChange={setReconSubTab} />}
 							{tab === "cipher" && <Tabs variant="chip" items={CIPHER_SUBTABS} value={cipherSubTab} onChange={setCipherSubTab} />}
+							{tab === "utilities" && <Tabs variant="chip" items={UTILITIES_SUBTABS} value={utilitiesSubTab} onChange={setUtilitiesSubTab} />}
 						</div>
 					)}
 					<main className="min-h-[300px] px-4 py-4">{!showSettings && <Onboarding onOpenPalette={() => setPaletteOpen(true)} />}{content}</main>

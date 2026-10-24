@@ -7,6 +7,7 @@ import { collectAllLinksInPage, collectSecretsFromPage } from "../app/lib/collec
 import { autoDecode, describePath } from "../app/lib/encoding.js";
 import { getSelectedText, copyInPage, toastInPage } from "../app/lib/pageActions.js";
 import { startJob, cancelJob, ackJob, resumeIfNeeded, ALARM } from "../app/lib/pathJob.js";
+import { startSitemap, stopSitemap, clearSitemap, registerSitemap } from "../app/lib/sitemap.js";
 
 const getBrowserAPI = () => globalThis.chrome ?? globalThis.browser;
 
@@ -202,6 +203,19 @@ getBrowserAPI().runtime.onMessage.addListener((request, sender, sendResponse) =>
 		return true;
 	}
 
+	if (request?.action === "sitemapStart") {
+		startSitemap(api, request.domain).then(sendResponse);
+		return true;
+	}
+	if (request?.action === "sitemapStop") {
+		stopSitemap(api).then(sendResponse);
+		return true;
+	}
+	if (request?.action === "sitemapClear") {
+		clearSitemap(api).then(sendResponse);
+		return true;
+	}
+
 	if (request?.action === "openUrlsInNewTabs" && request.urls) {
 		request.urls.forEach((url) => api.tabs.create({ url, active: false }));
 		sendResponse({ status: "success" });
@@ -229,3 +243,7 @@ getBrowserAPI().alarms?.onAlarm.addListener((a) => {
 	if (a.name === ALARM) resumeIfNeeded(getBrowserAPI());
 });
 resumeIfNeeded(getBrowserAPI());
+
+// ─── Sitemap tracker ──────────────────────────────────────────────────────────
+// Records the site's requests while tracking is on (see lib/sitemap.js).
+registerSitemap(getBrowserAPI());

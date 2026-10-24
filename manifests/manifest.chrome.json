@@ -9,6 +9,7 @@
 		"storage",
 		"contextMenus",
 		"cookies",
+		"webRequest",
 		"alarms",
 		"system.display",
 		"clipboardRead",

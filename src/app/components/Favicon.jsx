@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { initialOf } from "../lib/utils.js";
+import { Icon } from "./ui/Icon.jsx";
 
 // Session-wide cache: domains whose /favicon.ico failed (so we don't retry
 // per render) and ones that loaded. The browser's HTTP cache covers the bytes.
@@ -7,12 +7,12 @@ const failed = new Set();
 const loaded = new Set();
 
 /** Site favicon (`https://<domain>/favicon.ico`), lazy-loaded, falling back
- * to the domain's first letter on a brand-colored tile if it can't load. */
+ * to a neutral globe icon if it can't load. */
 export function Favicon({ domain, size = 24 }) {
 	const [broken, setBroken] = useState(() => failed.has(domain));
 	const tile = "grid shrink-0 place-items-center rounded-lg";
 	if (broken || !domain) {
-		return <span style={{ width: size, height: size }} className={`${tile} bg-brand text-[11px] font-extrabold text-white`}>{initialOf(domain)}</span>;
+		return <span style={{ width: size, height: size }} className={`${tile} bg-surface-2 text-muted`}><Icon name="globe" size={Math.round(size * 0.6)} /></span>;
 	}
 	return (
 		<span style={{ width: size, height: size }} className={`${tile} overflow-hidden bg-surface-2`}>

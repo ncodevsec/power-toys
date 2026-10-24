@@ -108,12 +108,18 @@ export default function CookiesTab({ domain }) {
 			url: cookieUrl(form),
 			name: form.name,
 			value: form.value,
-			domain: form.domain,
 			path: form.path || "/",
 			secure: !!form.secure,
 			httpOnly: !!form.httpOnly,
 			sameSite: form.sameSite,
 		};
+		// A host-only cookie ("app.example.com") and a domain cookie
+		// (".example.com") are two different cookies. Sending `domain` for a
+		// host-only cookie turns the save into a brand-new domain cookie next to
+		// the old one - that was the duplicate. Only send it when the leading dot
+		// is there; otherwise the url alone keeps the cookie host-only.
+		if (form.domain.trim().startsWith(".")) details.domain = form.domain.trim();
+		if (form._original?.storeId) details.storeId = form._original.storeId;
 		if (form.expirationDate) details.expirationDate = form.expirationDate;
 
 		try {
@@ -159,7 +165,7 @@ export default function CookiesTab({ domain }) {
 						url: cookieUrl(c),
 						name: c.name,
 						value: c.value,
-						domain: c.domain,
+						...(c.domain?.startsWith(".") ? { domain: c.domain } : {}),
 						path: c.path || "/",
 						secure: !!c.secure,
 						httpOnly: !!c.httpOnly,

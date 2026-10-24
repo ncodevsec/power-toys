@@ -203,11 +203,11 @@ Automated detection of hardcoded secrets and sensitive patterns:
 ### 7. **User Interface Features**
 
 - **Navigation**:
-    - Popup: a top tab bar with Recon, Cipher, Bulk Opener, Storage, and Cookies; Recon and Cipher each show a second row of sub-tabs
+    - Popup: a top tab bar with Recon, Cipher, Utilities, Storage, and Cookies; Recon, Cipher and Utilities each show a second row of sub-tabs
     - Full tab: a full-height left sidebar instead of the top tab bar, with Recon and Cipher as collapsible accordion groups
-    - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check)
+    - **Recon** (page info-gathering): Links, Params, Secrets, Paths (sensitive-path probing), Headers (security header check), Sitemap (records the site's requests while you browse)
     - **Cipher** (crypto/encoding toolkit): Encode/Decode (with Auto Decode and 20+ encodings, classic ciphers and hashes), JWT, Hash ID
-    - Bulk Opener — Open many URLs at once, by tab, by window, or grouped by domain
+    - **Utilities**: Bulk Opener (open many URLs at once, by tab, by window, or grouped by domain), Formatter, Diff, Timestamp, UUID, Regex
     - Storage — View, add, edit, delete, export, and import localStorage/sessionStorage for the current site
     - Cookies — View, add, edit, delete, export, and import cookies for the current site
     - Settings — gear icon in the header, becomes a back arrow while open; five sections covering every piece of configuration (General, URL Patterns, Parameter Keywords, Custom Patterns, Sensitive Paths)
@@ -305,6 +305,13 @@ Both browser builds ship the *same* `src/` tree — the manifest is the only thi
 - **Developer Mode**: Temporary add-on loading for testing
 
 ## Changelog
+
+### Unreleased
+
+- Fixed: editing a cookie no longer leaves a second copy behind (host-only cookies stay host-only; import too)
+- Link favicons fall back to a neutral globe icon instead of the domain's first letter
+- Utilities is now a main tab (Bulk Opener, Formatter, Diff, Timestamp, UUID, Regex); it moved out of Cipher, and Bulk Opener moved under it
+- Recon → Sitemap: a Start/Stop tracker that records pages, scripts, styles, XHR/fetch and other requests for the site while you browse (Burp-style), with type filters, search, and Postman/Burp export. Adds the `webRequest` permission
 
 ### v1.0.0 (update batch)
 

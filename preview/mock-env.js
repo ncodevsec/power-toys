@@ -8,6 +8,7 @@ import defaultsJson from "../config/defaults.json";
 import customPatternsJson from "../config/custom-patterns.json";
 import sensitivePathsJson from "../config/sensitive-paths.json";
 import { FIXTURE_LINKS, FIXTURE_SECRETS, FIXTURE_COOKIES, FIXTURE_WEB_STORAGE } from "./fixtures.js";
+import { FIXTURE_SITEMAP } from "./fixtures-sitemap.js";
 
 const store = {
 	local: {
@@ -19,9 +20,12 @@ const store = {
 		// fixture data as the popup view, instead of an empty state.
 		savedLinks: FIXTURE_LINKS,
 		savedSecrets: FIXTURE_SECRETS,
+		sitemapEntries: FIXTURE_SITEMAP,
 	},
 	sync: {},
 };
+const storageListeners = new Set();
+const emitStorage = (changes) => storageListeners.forEach((fn) => fn(changes, "local"));
 let execCallIndex = 0;
 let cookieStore = [...FIXTURE_COOKIES];
 let webStorage = { local: [...FIXTURE_WEB_STORAGE.local], session: [...FIXTURE_WEB_STORAGE.session] };
@@ -37,18 +41,28 @@ window.chrome = {
 		id: "preview",
 		getManifest: () => ({ version: "0.6.0-preview" }),
 		getURL: (p) => "/" + p,
-		sendMessage: (msg, cb) => cb && cb({}),
+		sendMessage: (msg, cb) => {
+			// Stand-in for the background script's sitemap tracker.
+			if (msg?.action === "sitemapStart") { store.local.sitemapState = { domain: msg.domain, startedAt: Date.now() }; emitStorage({ sitemapState: { newValue: store.local.sitemapState } }); }
+			if (msg?.action === "sitemapStop") { store.local.sitemapState = null; emitStorage({ sitemapState: { newValue: null } }); }
+			if (msg?.action === "sitemapClear") { store.local.sitemapEntries = {}; emitStorage({ sitemapEntries: { newValue: {} } }); }
+			cb && cb({ ok: true });
+		},
 		lastError: null,
 	},
 	storage: {
 		local: {
 			get: (keys, cb) => cb(Object.fromEntries(keys.map((k) => [k, store.local[k]]).filter(([, v]) => v !== undefined))),
-			set: (data, cb) => { Object.assign(store.local, data); cb && cb(); },
+			set: (data, cb) => { Object.assign(store.local, data); emitStorage(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, { newValue: v }]))); cb && cb(); },
 			remove: (keys, cb) => { [].concat(keys).forEach((k) => delete store.local[k]); cb && cb(); },
 		},
 		sync: {
 			get: (keys, cb) => cb(Object.fromEntries(keys.map((k) => [k, store.sync[k]]).filter(([, v]) => v !== undefined))),
 			set: (data, cb) => { Object.assign(store.sync, data); cb && cb(); },
+		},
+		onChanged: {
+			addListener: (fn) => storageListeners.add(fn),
+			removeListener: (fn) => storageListeners.delete(fn),
 		},
 	},
 	commands: { getAll: (cb) => cb([{ name: "open-palette", description: "Open the command palette", shortcut: "Ctrl+Shift+K" }, { name: "auto-decode-selection", description: "Auto-decode the selected text", shortcut: "Ctrl+Shift+D" }]) },

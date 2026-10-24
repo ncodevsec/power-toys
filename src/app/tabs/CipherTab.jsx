@@ -3,7 +3,6 @@ import { CIPHER_SUBTABS } from "../lib/navigation.js";
 import EncodeDecodePanel from "./cipher/EncodeDecodePanel.jsx";
 import JwtPanel from "./cipher/JwtPanel.jsx";
 import HashIdPanel from "./cipher/HashIdPanel.jsx";
-import UtilitiesPanel from "./cipher/UtilitiesPanel.jsx";
 
 /**
  * `mode`/`onModeChange` are controlled from App.jsx (like Recon's sub-tab)
@@ -19,7 +18,6 @@ export default function CipherTab({ mode, onModeChange, fullTab, preset }) {
 					{mode === "encode" && <EncodeDecodePanel preset={preset} />}
 					{mode === "jwt" && <JwtPanel />}
 					{mode === "hash" && <HashIdPanel />}
-					{mode === "tools" && <UtilitiesPanel />}
 				</div>
 			</Card>
 		</div>

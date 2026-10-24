@@ -1,16 +1,8 @@
 import { useMemo, useState } from "react";
-import { Badge, Button, CopyButton, EmptyState, Field, Input, Select, Tabs, Textarea, Toggle } from "../../components/ui/index.js";
+import { Badge, Button, CopyButton, EmptyState, Field, Input, Select, Textarea, Toggle } from "../../components/ui/index.js";
 import { CopyAs } from "../../components/CopyAs.jsx";
 import { base64Pretty, convertTime, diffText, formatJson, makeUuids, prettyUrl, testRegex } from "../../lib/devtools.js";
 import { useToast } from "../../providers.jsx";
-
-const TOOLS = [
-	{ id: "format", label: "Formatter" },
-	{ id: "diff", label: "Diff" },
-	{ id: "time", label: "Timestamp" },
-	{ id: "uuid", label: "UUID" },
-	{ id: "regex", label: "Regex" },
-];
 
 const Notice = ({ children }) => <p role="alert" className="rounded-2xl border border-brand bg-brand-soft px-4 py-2.5 text-sm text-brand-ink">{children}</p>;
 
@@ -190,11 +182,11 @@ function RegexTool() {
 	);
 }
 
-export default function UtilitiesPanel() {
-	const [tool, setTool] = useState("format");
+// `tool` is controlled by App.jsx (via the Utilities sub-tabs in the popup
+// chip row / full-tab sidebar), so this panel renders just the chosen tool.
+export default function UtilitiesPanel({ tool }) {
 	return (
 		<div className="space-y-4">
-			<Tabs variant="chip" items={TOOLS} value={tool} onChange={setTool} />
 			{tool === "format" && <FormatterTool />}
 			{tool === "diff" && <DiffTool />}
 			{tool === "time" && <TimeTool />}

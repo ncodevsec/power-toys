@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Icon } from "./ui/index.js";
 import { cx } from "../lib/utils.js";
-import { TOP_TABS, RECON_SUBTABS, CIPHER_SUBTABS, SETTINGS_SECTIONS } from "../lib/navigation.js";
+import { TOP_TABS, RECON_SUBTABS, CIPHER_SUBTABS, UTILITIES_SUBTABS, SETTINGS_SECTIONS } from "../lib/navigation.js";
 
 const ACCORDION_GROUPS = [
 	{ id: "recon", icon: "eye", label: "Recon", items: RECON_SUBTABS },
 	{ id: "cipher", icon: "lock", label: "Cipher", items: CIPHER_SUBTABS },
+	{ id: "utilities", icon: "wrench", label: "Utilities", items: UTILITIES_SUBTABS },
 ];
 const STANDALONE_ITEMS = TOP_TABS.filter((t) => !ACCORDION_GROUPS.some((g) => g.id === t.id));
 
@@ -61,11 +62,11 @@ function AccordionGroup({ icon, label, items, active, activeSub, onSelect, defau
 
 /**
  * Full-tab-only left navigation, replacing the popup's horizontal tab bar.
- * Recon and Cipher are collapsible accordion groups (their sub-views spread
+ * Recon, Cipher and Utilities are collapsible accordion groups (their sub-views spread
  * open below them) rather than always-expanded. While Settings is open, the
  * whole nav swaps to Settings' own sections instead of the main app's tabs.
  */
-export function Sidebar({ showSettings, tab, reconSubTab, cipherSubTab, onSelectRecon, onSelectCipher, onSelectTab, settingsSection, onSelectSettingsSection }) {
+export function Sidebar({ showSettings, tab, reconSubTab, cipherSubTab, utilitiesSubTab, onSelectRecon, onSelectCipher, onSelectUtilities, onSelectTab, settingsSection, onSelectSettingsSection }) {
 	return (
 		<nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line bg-surface-2/40 px-3 py-4">
 			{showSettings ? (
@@ -82,6 +83,8 @@ export function Sidebar({ showSettings, tab, reconSubTab, cipherSubTab, onSelect
 					<AccordionGroup icon="eye" label="Recon" items={RECON_SUBTABS} active={tab === "recon"} activeSub={reconSubTab} onSelect={onSelectRecon} />
 					<div className="h-px bg-line" />
 					<AccordionGroup icon="lock" label="Cipher" items={CIPHER_SUBTABS} active={tab === "cipher"} activeSub={cipherSubTab} onSelect={onSelectCipher} defaultOpen={false} />
+					<div className="h-px bg-line" />
+					<AccordionGroup icon="wrench" label="Utilities" items={UTILITIES_SUBTABS} active={tab === "utilities"} activeSub={utilitiesSubTab} onSelect={onSelectUtilities} defaultOpen={false} />
 					<div className="h-px bg-line" />
 					<div className="space-y-0.5">
 						{STANDALONE_ITEMS.map((item) => (
